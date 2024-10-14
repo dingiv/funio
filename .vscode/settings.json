@@ -1,0 +1,10 @@
+{
+	"files.exclude": {
+		"node_modules": true,
+		".vscode": true,
+		"env.d.ts": false,
+		"pnpm-lock.yaml": true,
+		"src/lib/curry.ts": true,
+		"dist": false
+	}
+}

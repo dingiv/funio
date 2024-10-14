@@ -1,0 +1,35 @@
+{
+   "name": "libuf",
+   "version": "1.0.0",
+   "author": "",
+   "description": "A simple functor library ready for use.",
+   "license": "MIT",
+   "main": "./dist/fp.js",
+   "type": "module",
+   "keywords": [
+      "composition",
+      "fp",
+      "functional",
+      "functor",
+      "hooks",
+      "ts"
+   ],
+   "scripts": {
+      "build": "vite build",
+      "dev": "vite dev",
+      "test": "vitest"
+   },
+   "devDependencies": {
+      "@types/node": "^20.12.12",
+      "typescript": "^5.4.5",
+      "vite": "^5.2.11",
+      "vite-plugin-dts": "^3.9.1",
+      "vitest": "^1.6.0"
+   },
+   "exports": {
+      "default": "./dist/fp.js",
+      "import": "./dist/fp.mjs",
+      "node": "./dist/fp.js",
+      "types": "./dist/index.d.ts"
+   }
+}
