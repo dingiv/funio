@@ -1,3 +1,3 @@
 
 export * from './functor'
-export * from './types'
+export type * from './types'

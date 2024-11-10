@@ -1,5 +1,5 @@
 import { test } from 'vitest'
-import { $p, CurryFunction2, curry, pipeline, rearg, spread } from '@lib/index'
+import { $p, CurryFunction2, curry, pipeline, rearg, spread } from '../backup/lib'
 
 
 test('test curry', () => {
@@ -15,7 +15,8 @@ test('test curry', () => {
 })
 
 test('test rearg', () => {
-   const f = rearg((a: string, b: boolean) => 2 + a + b, [1, 0])
+   const a = 1
+   const f = rearg((a: string, b: boolean) => 2 + a + b, [a, 0])
    console.log(f.length)
    console.log(f(true, 'ssss'))
 

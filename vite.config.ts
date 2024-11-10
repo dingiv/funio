@@ -26,7 +26,7 @@ export default defineConfig((e) => {
          emptyOutDir: true
       },
       test: {
-         include: ['./tests/**'],
+         include: ['./tests/**.test.ts'],
       }
    } as UserConfig
 })
