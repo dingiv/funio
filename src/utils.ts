@@ -76,16 +76,3 @@ export function equals(x, y) {
    }
    return x === y;
 }
-
-const a = {
-   a: 32,
-   b: '242',
-   c: 'sdf',
-   d: 32
-}
-
-console.log(reverse(a))
-
-console.log(mapEntry(a, (key, val) => [val, key]))
-
-console.log(zip([213, 23, 1, 'af'], [3, {fs:'sf'}, 'af', 'af']))

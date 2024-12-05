@@ -15,11 +15,6 @@ export type NF<A extends any[] = any[], R = any> = (...args: A) => R
  */
 export type Primitive = boolean | number | bigint | string | symbol | undefined | null
 
-/**
- * 非空原始类型
- */
-export type RealPrimitive = boolean | number | bigint | string | symbol 
-
 export type RecordKey = string | number | symbol
 export type RealRecord = Record<RecordKey, any>
 
