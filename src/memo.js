@@ -1,50 +1,3 @@
-
-export const useState = (init) => {
-	if (typeof init === 'function') {
-		let data;
-		let inited = false;
-		const set = (val) => {
-			if (!inited) {
-				inited = true;
-				data = init();
-			}
-			if (typeof val === 'function')
-				return data = val(data);
-			return data = val;
-		};
-		const get = () => {
-			if (inited) return data;
-			inited = true
-			return data = init();
-		};
-		return [get, set];
-	} else {
-		return [
-			() => init,
-			(val) => {
-				if (typeof val === 'function')
-					return init = val(init);
-				return init = val;
-			}
-		];
-	}
-}
-
-/**
- * useStore
- * 创建一个复杂类型的状态
- */
-export const useStore = (object) => {
-
-}
-
-/**
- * 托管一个脏函数的生命周期
- */
-export const useEffect = (scope) => {
-
-}
-
 /**
  * 创建一个只会调用一次的函数
  */
@@ -230,3 +183,5 @@ export const useAspect = () => {
 Object.getOwnPropertyNames
 Object.getOwnPropertySymbols
 Object.getOwnPropertyDescriptors
+
+

@@ -1,4 +1,4 @@
-import { PipeFunc, Right } from "./pipe"
+import { PipeProcessor, Right } from "./pipe"
 
 /**
   * 模式匹配
@@ -23,7 +23,7 @@ export const createMatchPipe = (pattern: any, callback: any, matches: [any, Func
       pattern,
       callback,
    }
-   const pipe = Right(matchFunc)
+   const pipe = Right(matchProcessor)
    pipe.args = {
       matches: [...matches, match]
    }
@@ -64,7 +64,7 @@ export const doMatch = (data: any, patternValue: any) => {
    }
 }
 
-export const matchFunc: PipeFunc = (data: any, args: any, ctx: any) => {
+export const matchProcessor: PipeProcessor = (data: any, args: any, ctx: any) => {
    const { matches = [] } = args
    for (const { pattern, callback } of matches) {
       let result
@@ -120,8 +120,6 @@ const metaMatchPattern: MetaMatchPattern = {
       return (b: any) => typeof b === type ? b : undefined
    },
 }
-
-
 
 interface StringMatchPattern {
    startsWith(): any;

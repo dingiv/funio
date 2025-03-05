@@ -1,78 +1,216 @@
-import { NF } from "./types"
+import { RD, KeyType } from "./types"
+import { factory } from "./utils"
 
-export interface Pipe {
-   type: boolean  // true 代表针对正常状态，false 代表针对错误状态
-   func: NF<[any, PipelineContext], any>
-   args?: PipelineContext
-}
+/**
+ * 管道处理函数
+ * @param {any} prevReturn 上一次管道的返回值
+ */
+export type PipeProcessor<A = any, B = any> = (prevReturn: A, ctx?: PipeContext) => B
 
-export type PipeFunc = (data: any, args: Object, ctx: PipelineContext) => any
+const StatusType = { OK: false, ER: true } as const
 
-export interface Status {
-   type: StatusType  // true 代表 func 执行正常状态，false 代表错误状态
-   data: any
-}
+export interface PipeConfig extends ReturnType<typeof PipeConfig> { [key: string]: any }
+export const PipeConfig = factory(class PipeConfig {
+   key: symbol
+   statusType: boolean
+   processor: PipeProcessor
+   useCtx?: boolean
+   stateConstructor?: Function
+   constructor(func: PipeProcessor, status?: boolean) {
+      this.key = Symbol()
+      this.processor = func
+      this.statusType = Boolean(status)
+   }
+})
 
-export const StatusType = {
-   LEFT: false,
-   RIGHT: true
-}
-export type StatusType = boolean
+export type Pipeline = ReturnType<typeof Pipeline>
+export const Pipeline = factory(class Pipeline {
+   lineMap: Record<KeyType, PipeConfig[]>
+   state: Record<KeyType, Record<KeyType, any>>
+   main: KeyType
+   env: Record<string, any>
+   shiftMap?: ShiftMap
+   constructor(configMap: Record<KeyType, PipeConfig[]>, main: KeyType, env: Record<string, any>) {
+      this.lineMap = configMap
+      this.main = main
+      this.state = {}
+      this.env = env
+   }
 
-export interface PipelineContext {
-   [s: string]: any
-}
+   initShiftMap() {
+      this.shiftMap = ShiftMap(this)
+   }
 
-export const execPipeline = (pipeline: Pipe[], data: any, awaitPoint: number = Number.MAX_SAFE_INTEGER) => {
-   const mid = Math.min(pipeline.length, awaitPoint)
-   let type = StatusType.RIGHT
-   // 执行同步管道
-   for (let i = 0; i < mid; ++i) {
-      try {
-         const pipe = pipeline[i]
-         if (type === pipe.type) {
-            data = pipe.func(data, pipe.args ?? {})
-            if (data instanceof Promise) {
-               data.catch((err) => {
-                  console.error('an uncaught rejected promise is passed in sync pipeline')
-                  return err
-               })
+   pushPipe(line: KeyType, config: PipeConfig) {
+      if (!this.lineMap[line]) {
+         this.lineMap[line] = []
+      }
+      this.lineMap[line].push(config)
+   }
+
+   insertPipe(line: KeyType, config: PipeConfig) {
+      if (!this.lineMap[line]) {
+         this.lineMap[line] = []
+      }
+      this.lineMap[line].unshift(config)
+   }
+})
+
+const IntoMap = factory(class IntoMap {
+   
+})
+
+const CTX_PIPELINE = Symbol('pipe_ctx_pipeline')
+const CTX_TEMP = Symbol('pipe_ctx_temp')
+const CTX_THIS = Symbol('pipe_ctx_this_arg')
+const CTX_STATE = Symbol('pipe_ctx_state')
+const CTX_CONFIG = Symbol('pipe_ctx_config')
+
+export interface PipeContext extends ReturnType<typeof PipeContext> { }
+export const PipeContext = factory(class PipeContext {
+   [key: KeyType]: any
+   declare [CTX_PIPELINE]: Pipeline
+   declare [CTX_TEMP]: RD<any>
+   declare [CTX_THIS]: object
+
+   /**
+    * 当次调用的传递上下文
+    */
+   get temp(): RD<any> { return this[CTX_TEMP] }
+   /**
+    * 当次调用的 this，默认为 undefined
+    */
+   get thisArg(): object { return this[CTX_THIS] }
+   /**
+    * 当前管道的状态，对于 pipieline 实例而言，不同 pipieline 实例的 pipeState 是独立的
+    */
+   get state(): Record<string, any> { return this[CTX_STATE] }
+   declare [CTX_STATE]: Record<string, any>
+   /**
+    * 当前管道的配置参数，immutable
+    */
+   get config(): PipeConfig { return this[CTX_CONFIG] }
+   declare [CTX_CONFIG]: PipeConfig
+   /**
+    * 当前管道的跳跃调动函数，immutable
+    */
+   get into() {
+      // TODO: 添加 shift 函数的支持
+      return this[CTX_PIPELINE].shiftMap!
+   }
+   /**
+    * 当前全局的环境变量，immutable
+    */
+   get env(): Record<string, any> { return this[CTX_PIPELINE].env }
+
+   constructor(
+      config: PipeConfig,
+      state: RD<RD<any>>,
+      thisArg: object,
+      pipeline: Pipeline
+   ) {
+      this[CTX_PIPELINE] = pipeline
+      this[CTX_TEMP] = {}
+      this[CTX_THIS] = thisArg
+      this[CTX_STATE] = state
+      this[CTX_CONFIG] = config
+   }
+})
+
+interface ShiftMap { }
+const ShiftMap = function () {
+   const CONFIG = Symbol('pipe_shift_config')
+   const PIPEPINE = Symbol('pipe_shift_pipeline')
+   function dummy() { }
+
+   const proxyHandler = {
+      get(target: any, key: KeyType) {
+         if (!(key in target[CONFIG])) return dummy
+         let tmp = target[key]
+         if (!tmp) {
+            target[key] = tmp = function (this: any, arg0: any) {
+               executeSubPipeline(this[PIPEPINE], key, arg0)
             }
-            type = StatusType.RIGHT
          }
-      } catch (error) {
-         if (!(error instanceof Error)) {
-            error = new Error(String(error))
-         }
-         type = StatusType.LEFT
-         data = error
+         return tmp
       }
    }
 
-   if (mid === pipeline.length) return { data, type }
+   return (pipeline: Pipeline) => {
+      return new Proxy({
+         [PIPEPINE]: pipeline,
+         [CONFIG]: pipeline.lineMap
+      }, proxyHandler)
+   }
+}()
 
-   // 执行异步管道
-   data = execAsyncPipeline(pipeline, { type, data }, mid)
-   return { data, type: false }
+/**
+ * This function runs a Pipeline instance.
+ * @param pipeline 
+ * @param data the initial data to be processed
+ * @param thisArg thisArg differs among the each of calls, so it is passed every times.
+ * @param env 
+ */
+export const executePipeline = (pipeline: Pipeline, data: any, thisArg: any) => {
+
+
+
+   return executeLine(pipeline, pipeline.main, data, thisArg)
 }
 
-const execAsyncPipeline = async (pipeline: Pipe[], status: Status, start: number) => {
-   let { data, type } = status
+const executeLine = (pipeline: Pipeline, line: KeyType, data: any, thisArg: any) => {
+   let type: boolean = StatusType.OK, index = 0, isAsync = false
+   const trunkConfig = pipeline.lineMap[line], states = pipeline.state
+
+   while (index < trunkConfig.length) {
+      const config = trunkConfig[index], state = states[config.key]
+      try {
+         // A pipe processor should run when its type equals to the statusType
+         if (type === config.statusType) {
+            const ctx = config.useCtx ?
+               PipeContext(config, state, thisArg, pipeline) : undefined
+            data = config.processor.call(undefined, data, ctx)
+            type = StatusType.OK
+            if (data instanceof Promise) {
+               isAsync = true
+               break
+            }
+         }
+      } catch (error) {
+         if (!(error instanceof Error)) {
+            error = Error(String(error))
+         }
+         type = StatusType.ER
+         data = error
+      }
+      index++
+   }
+
+   if (isAsync) {
+      // 执行异步管道
+      data = execAsyncLine(pipeline, data, type, index, thisArg)
+      return { data, isSuccess: false, isAsync: true }
+   } else {
+      return { data: data.value, isSuccess: type, isAsync: false }
+   }
+}
+
+const execAsyncLine = async (pipeline: any, data: any, type: boolean, start: number, thisArg: object) => {
    for (let i = start; i < pipeline.length; ++i) {
       try {
          const pipe = pipeline[i]
-         if (type === pipe.type) {
+         if (type === pipe.statusType) {
             if (data instanceof Promise) {
                data = await data
             }
-            data = pipe.func(data, pipe.args ?? {})
-            type = StatusType.RIGHT
+            data = pipe.func(data, thisArg, pipe.args ?? {}, {})
+            type = StatusType.OK
          }
       } catch (error) {
          if (!(error instanceof Error)) {
             error = new Error(String(error))
          }
-         type = StatusType.LEFT
+         type = StatusType.ER
          data = error
       }
    }
@@ -82,6 +220,6 @@ const execAsyncPipeline = async (pipeline: Pipe[], status: Status, start: number
    return data
 }
 
-export const Left = (func: any): Pipe => ({ type: StatusType.LEFT, func })
-export const Right = (func: any): Pipe => ({ type: StatusType.RIGHT, func })
+const executeSubPipeline = (pipe: Pipeline, data: any, thisArg: object) => {
 
+}

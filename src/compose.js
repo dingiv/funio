@@ -1,52 +1,52 @@
-export const curry = (func, len = 0) => {
-   len = len || func.length
-   if (len === 0) return func;
+export const curry = (func, argc = 0) => {
+   argc = Number(argc) || func.length
+   if (argc <= 0) return func
    const curried = (...args) => {
-      if (args.length >= len) {
-         return func(...args);
+      if (args.length >= argc) {
+         return func(...args)
       } else {
          return (...args2) => curried(...args, ...args2)
       }
-   };
-   return curried;
-};
+   }
+   return curried
+}
 
 
 export const compose = (...functions) => {
    return (data) => {
       for (let i = functions.length - 1; i >= 0; --i) {
-         data = functions[i](data);
+         data = functions[i](data)
       }
-      return data;
-   };
-};
+      return data
+   }
+}
 
 
 export const pipeline = (...functions) => {
    return (data) => {
       for (let i = 0, len = functions.length; i < len; ++i) {
-         data = functions[i](data);
+         data = functions[i](data)
       }
-      return data;
-   };
-};
+      return data
+   }
+}
 
 
 export const rearg = (func, indexMap = []) => {
-   const len = func.length;
-   if (len < 2 || len !== indexMap.length) return func;
+   const len = func.length
+   if (len < 2 || len !== indexMap.length) return func
    // 检查索引
-   const tmp = indexMap.map((index, order) => ({ order, index }));
-   tmp.sort((a, b) => a.index - b.index);
-   tmp.forEach((x, i) => (x.index = i));
-   tmp.sort((a, b) => a.order - b.order);
-   const newMap = tmp.map((x) => x.index);
+   const tmp = indexMap.map((index, order) => ({ order, index }))
+   tmp.sort((a, b) => a.index - b.index)
+   tmp.forEach((x, i) => (x.index = i))
+   tmp.sort((a, b) => a.order - b.order)
+   const newMap = tmp.map((x) => x.index)
    const rearged = (...args) => {
-      const newArgs = [];
+      const newArgs = []
       for (let i = 0, len = args.length; i < len; ++i) {
-         newArgs[newMap[i]] = args[i];
+         newArgs[newMap[i]] = args[i]
       }
-      return func(...newArgs);
+      return func(...newArgs)
    }
    Reflect.defineProperty(rearged, 'length', {
       value: func.length,
@@ -55,7 +55,7 @@ export const rearg = (func, indexMap = []) => {
       configurable: true
    })
    return rearged
-};
+}
 
 
 export const partial = (f, ...args) => {
@@ -77,16 +77,10 @@ export const partial = (f, ...args) => {
             if (newArgs[j] !== partial) continue
             newArgs[j] = args[i++]
          }
-         return f(...newArgs);
+         return f(...newArgs)
       } else {
          return (...args2) => curried(...args, ...args2)
       }
-   };
-   return curried;
-}
-export const $p = partial
-
-
-export const spread = (f) => {
-   return (args) => f(...args)
+   }
+   return curried
 }

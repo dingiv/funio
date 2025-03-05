@@ -1,9 +1,15 @@
+import { factory } from "./utils"
 
 const START = Symbol("start")
 const END = Symbol("end")
 const STEP = Symbol("step")
 
-class R {
+export interface Range extends ReturnType<typeof Range> {
+   [START]: number
+   [END]: number
+   [STEP]: number
+}
+export const Range = factory(class Range {
    constructor(public start: number, public end: number, public step: number = 1) { }
    [Symbol.iterator]() {
       let current = this.start
@@ -21,34 +27,4 @@ class R {
          }
       }
    }
-
-}
-
-export const Range = (start: number, end?: number, step: number = 1) => {
-   if (end === undefined) {
-      end = start
-      start = 0
-   }
-   const range = {
-      [START]: start,
-      [END]: end,
-      [STEP]: step,
-      [Symbol.iterator]() {
-         let current = this[START]
-         const end = this[END]
-
-         return {
-            next() {
-               if (current <= end) {
-                  const value = current
-                  current += step
-                  return { value, done: false }
-               }
-               return { done: true }
-            }
-         }
-      }
-   }
-
-   return range;
-}
+})

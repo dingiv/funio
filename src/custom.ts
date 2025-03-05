@@ -1,6 +1,6 @@
 
 // 允许用户添加额外的 pipe api
-export const withCustomPipe = (pipe: any) => {
+export const createFPipeGroup = (pipe: any) => {
    const customPipe = {
       ...pipe,
       transform: (value: any, ...args: any[]) => {

@@ -8,6 +8,10 @@ interface IntergerAssertion {
    le(): any;
 }
 
-const Assert = () => {
-   
+interface Assert {
+
+}
+
+const Assert: Assert = () => {
+
 }

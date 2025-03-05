@@ -1,9 +1,9 @@
-import { $f, Fpipe } from "@/index";
+import { $f, FPipe } from "@/index";
 import { $m, Match } from "@/match";
 import { expect, test } from "vitest";
 
 test('test value-mode', () => {
-   const f: Fpipe = $f(0).match(0, (a: any, b: any, c: any) => {
+   const f: FPipe = $f(0).match(0, (a: any, b: any, c: any) => {
       console.log('match 0')
       console.log(a, b, c)
       return a + b + c
@@ -34,13 +34,10 @@ test('test regex', () => {
    const r = /\$(\d+)/g
    console.log(r)
    console.log(text.match(r));
-
-
-
 })
 
 test('test function', () => {
-   const f: Fpipe = $f(0).match((x: any) => x + 1, (a: any, b: any, c: any) => {
+   const f: FPipe = $f(0).match((x: any) => x + 1, (a: any, b: any, c: any) => {
       console.log('match function')
       console.log(a, b, c)
       return a + b + c
@@ -59,7 +56,7 @@ test('test function', () => {
 })
 
 test('test function pick', () => {
-   const f: Fpipe = $f(0).match((x: any) => x.name, (a: any, b: any, c: any) => {
+   const f: FPipe = $f(0).match((x: any) => x.name, (a: any, b: any, c: any) => {
       console.log('match function')
       console.log(a, b, c)
       return a + b + c
@@ -79,7 +76,7 @@ test('test function pick', () => {
 })
 
 test('test match object 1', () => {
-   const f: Fpipe = $f(0).match((x: any) => x.name, (a: any, b: any, c: any) => {
+   const f: FPipe = $f(0).match((x: any) => x.name, (a: any, b: any, c: any) => {
       console.log('match function')
       console.log(a, b, c)
       return a + b + c
@@ -99,7 +96,7 @@ test('test match object 1', () => {
 })
 
 test('test match object 2', () => {
-   const f: Fpipe = $f(0).match((x: any) => x.gender, (a: any, b: any, c: any) => {
+   const f: FPipe = $f(0).match((x: any) => x.gender, (a: any, b: any, c: any) => {
       console.log('gender')
       console.log(a, b, c)
       return a + b + c

@@ -1,6 +1,6 @@
 {
    "name": "funio",
-   "version": "1.0.0",
+   "version": "0.0.0",
    "author": "",
    "description": "A simple functor library ready for use.",
    "license": "MIT",
@@ -16,11 +16,11 @@
    ],
    "scripts": {
       "build": "vite build",
-      "dev": "vite dev",
       "test": "vitest"
    },
    "devDependencies": {
       "@types/node": "^20.12.12",
+      "fp-ts": "^2.16.9",
       "typescript": "^5.4.5",
       "vite": "^5.2.11",
       "vite-plugin-dts": "^3.9.1",
