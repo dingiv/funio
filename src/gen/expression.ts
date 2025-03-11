@@ -1,17 +1,17 @@
 import { KeyType } from "@/types"
 import { builder } from "@/utils"
 
-export interface InjectionExpression extends ReturnType<typeof InjectionExpression> { }
-export const InjectionExpression = (key: KeyType) => {
-   const ie = new InjectionExpressionClass(key)
+export interface InjectionQueryObject extends ReturnType<typeof InjectionQueryObject> { }
+export const InjectionQueryObject = (key: KeyType) => {
+   const ie = new InjectionQueryObjectClass(key)
 
    return ie
 }
 
-class InjectionExpressionClass {
+class InjectionQueryObjectClass {
    [s: KeyType]: any
    constructor(key: KeyType) {
       this.name = key
    }
 }
-export const ieb = builder(InjectionExpressionClass)
+export const ieb = builder(InjectionQueryObjectClass)

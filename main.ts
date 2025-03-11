@@ -1,16 +1,31 @@
 
+console.time('b')
 
-
-function* gen(): Generator {
-   console.log(123)
-   const a = yield 123
-   console.log(a)
-
-   return 1
+let b = 0
+const f2 = () => {
+   for (let i = 0; i < 1_000_000; i++) {
+      b++
+   }
 }
+f2()
 
-const v = gen()
-const a = v.next(213)
-console.log("a", a)
+console.timeEnd('b')
 
-export {}
+
+
+const f1 = new Proxy(() => { }, {
+   apply(target, thisArg, argArray) {
+      for (let i = 0; i < 1_000_000; i++) {
+         a++
+      }
+   },
+})
+console.time('a')
+
+let a = 0
+f1()
+
+console.timeEnd('a')
+
+
+
