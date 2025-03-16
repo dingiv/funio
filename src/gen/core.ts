@@ -14,7 +14,7 @@ export const isGeneratorFunction = (func: Function) => {
 /**
  * receives a generator, run the generator and inject dependencies it need with injector
  */
-const feed = async (gen: Generator | AsyncGenerator, injector: Injector) => {
+export const feed = async (gen: Generator | AsyncGenerator, injector: Injector) => {
    let value: any = undefined
    while (true) {
       let next = gen.next(value)
@@ -27,7 +27,7 @@ const feed = async (gen: Generator | AsyncGenerator, injector: Injector) => {
          // handle diqe
          let diqv: any = next.value
          if (isGeneratorFunction(diqv)) {
-            value = await feed(diqv, injector)
+            value = feed(diqv, injector)
          } else {
             value = injector(diqv)
          }
@@ -37,4 +37,12 @@ const feed = async (gen: Generator | AsyncGenerator, injector: Injector) => {
       }
    }
 }
- 
+
+export type Result<R, E> = { value?: R, error?: E }
+export const genject = <R, E>(gen: Generator | AsyncGenerator, injector: Injector): Promise<Result<R, E>> => {
+   return feed(gen, injector).then((value) => ({
+      value,
+   })).catch((error) => ({
+      error
+   }))
+}

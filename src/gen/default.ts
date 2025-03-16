@@ -1,5 +1,5 @@
 import { KeyType } from "@/types"
-import { builder } from "@/utils"
+import { dynamicBuilder } from "@/utils"
 
 export interface Logger {
    debug(data: any[]): void
@@ -45,4 +45,4 @@ class InjectionQueryObjectClass {
       this.name = key
    }
 }
-export const ieb = builder(InjectionQueryObjectClass)
+export const ieb = dynamicBuilder(InjectionQueryObjectClass)

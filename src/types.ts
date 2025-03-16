@@ -4,6 +4,7 @@
  * 一元函数
  */
 export type UF<A = any, B = any> = (arg: A) => B
+export type UF_P<A = any, B = any> = (arg?: A) => B
 
 /**
  * 多元函数

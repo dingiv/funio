@@ -1,5 +1,6 @@
+import { dynamicBuilder } from "@/utils"
+import { KeyType } from "@/types"
 
-export type KeyType = string | symbol | number
 export const GolbalModule = Symbol.for('global_module')
 export interface Diqo {
    /**
@@ -16,6 +17,14 @@ export interface Diqo {
    module?: string | symbol | number
 }
 
-export const di = (value: any) => {
+class DIQO {
+   id: KeyType
+   constructor(id: KeyType) {
+      this.id = id
+   }
+}
 
+const defaultBuilder = dynamicBuilder(DIQO)
+export const di = (id: KeyType) => {
+   return defaultBuilder(id)
 }

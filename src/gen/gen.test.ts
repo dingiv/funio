@@ -1,5 +1,4 @@
-import { ieb } from ".";
-import { genject } from ".";
+import { genject } from "./core";
 import { test } from "vitest";
 
 test('test builder', () => {
