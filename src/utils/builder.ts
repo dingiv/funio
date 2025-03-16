@@ -28,12 +28,25 @@ export const builder = <T extends NF>(factory: T): NF<Parameters<T>, Builder<Ret
    return (...args: any[]) => dynamicBuilder(factory, args, setter) as any
 }
 
+const builderProto: any = {
+   /**
+    * if a 'Builder' is applyed to the 'await', or 'yield' operator in a async generator,
+    * the function will be hanged up. this is a serious bug.
+    * so we implement 'then' property to avoid being hanged up
+    */
+   then(this: any, r: UF) {
+      r(this[BUILDER_INSTANCE])
+   },
+   get $build() {
+      return this[BUILDER_INSTANCE]
+   },
+   [Symbol.toStringTag]: 'FunioBuilder'
+}
+
 const dynamicBuilder = <T extends object>(factory: NF, args: any[], setter: Record<string, Function>): Builder<T> => {
-   const target = {
-      [BUILDER_INSTANCE]: factory.apply(args),
-      [BUILDER_SETTER]: setter,
-      '$build': true
-   }
+   const target = Object.create(builderProto)
+   target[BUILDER_INSTANCE] = factory.apply(undefined, args)
+   target[BUILDER_SETTER] = setter
    return new Proxy(target, builderProxyHandler) as Builder<T>
 }
 
@@ -47,14 +60,28 @@ export const isBuilder = (maybeBuilder: any) => {
 
 
 export type Builder<T extends object> =
-   { [K in keyof T]: UF<T[K], Builder<T>>; } &
-   { [K: KeyType]: (...args: any[]) => Builder<T>; } &
-   { $build: T; }
+   {
+      [K in keyof T]-?: UF<T[K], Builder<T>>; } &
+   {
+      /**
+       * a dynamic builder will dynamic return property setter to support chaining
+       */
+      [K: KeyType]: (...args: any[]) => Builder<T>;
+   } &
+   {
+      /**
+       * if a 'Builder' is applyed to the 'await', or 'yield' operator in a async generator,
+       * the function will be hanged up. this is a serious bug.
+       * so we implement 'then' property to avoid being hanged up
+       */
+      then<R, E>(onResolve: UF<T, R>, onRejected: UF<Error, E>): Builder<T>;
+      $build: T;
+   }
 
 const builderProxyHandler: ProxyHandler<any> = {
    get(target, key) {
       if (key in target) {
-         return target[BUILDER_INSTANCE]
+         return target[key]
       }
       let setter = target[BUILDER_SETTER][key]
       if (!setter) {

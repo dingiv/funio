@@ -1,5 +1,5 @@
-import { KeyType } from "@/types"
-import { dynamicBuilder } from "@/utils"
+import { Injector } from "./core"
+
 
 export interface Logger {
    debug(data: any[]): void
@@ -8,12 +8,32 @@ export interface Logger {
    error(data: any[]): void
 }
 
-export interface FunioGenInjectorConfig {
-   logger: Logger
+export interface FunioInjector extends Injector {
+   priority: number
+   primitiveInjector: Injector,
+   noneInjector: Injector,
+   objectInjector: Injector,
+   functionInjector: Injector
 }
 
-export const FunioGenInjector = (config: Partial<FunioGenInjectorConfig>) => {
+export interface FunioInjectorConfig {
+   logger: Logger
+   queue: FunioInjector[]
+}
 
+export const createFunioInjector = (config: Partial<FunioInjectorConfig>) => {
+   config = { ...config }
+   function doInject() {
+      
+   }
+   return async (diqo: any) => {
+      diqo = await diqo
+      switch (typeof diqo) {
+         case 'object':
+         case 'undefined':
+         case 'function':
+      }
+   }
 }
 
 export const WebInjector = () => {
@@ -31,18 +51,3 @@ export const NodejsInjector = () => {
 
 }
 
-
-export interface InjectionQueryObject extends ReturnType<typeof InjectionQueryObject> { }
-export const InjectionQueryObject = (key: KeyType) => {
-   const ie = new InjectionQueryObjectClass(key)
-
-   return ie
-}
-
-class InjectionQueryObjectClass {
-   [s: KeyType]: any
-   constructor(key: KeyType) {
-      this.name = key
-   }
-}
-export const ieb = dynamicBuilder(InjectionQueryObjectClass)

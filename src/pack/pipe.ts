@@ -1,5 +1,5 @@
-import { RD, KeyType } from "./types"
-import { factory } from "./utils"
+import { RRecord, KeyType } from "@/types"
+import { factory } from "@/utils"
 
 /**
  * 管道处理函数
@@ -57,7 +57,7 @@ export const Pipeline = factory(class Pipeline {
 })
 
 const IntoMap = factory(class IntoMap {
-   
+
 })
 
 const CTX_PIPELINE = Symbol('pipe_ctx_pipeline')
@@ -70,13 +70,13 @@ export interface PipeContext extends ReturnType<typeof PipeContext> { }
 export const PipeContext = factory(class PipeContext {
    [key: KeyType]: any
    declare [CTX_PIPELINE]: Pipeline
-   declare [CTX_TEMP]: RD<any>
+   declare [CTX_TEMP]: RRecord<any>
    declare [CTX_THIS]: object
 
    /**
     * 当次调用的传递上下文
     */
-   get temp(): RD<any> { return this[CTX_TEMP] }
+   get temp(): RRecord<any> { return this[CTX_TEMP] }
    /**
     * 当次调用的 this，默认为 undefined
     */
@@ -105,7 +105,7 @@ export const PipeContext = factory(class PipeContext {
 
    constructor(
       config: PipeConfig,
-      state: RD<RD<any>>,
+      state: RRecord<RRecord<any>>,
       thisArg: object,
       pipeline: Pipeline
    ) {

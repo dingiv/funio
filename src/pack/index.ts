@@ -1,6 +1,6 @@
-import { PackAsyncClass } from "./async"
 import { FUNIO_PACK } from "./core"
-import { PackSync } from "./sync"
+import { PackAsyncClass } from "./impl/async"
+import { PackSync } from "./impl/sync"
 
 
 export interface pack<T> extends PackSync<T> { }
