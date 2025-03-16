@@ -1,5 +1,5 @@
-import { ieb } from "@/gen/expression";
-import { genject } from "@/gen/inject";
+import { ieb } from ".";
+import { genject } from ".";
 import { test } from "vitest";
 
 test('test builder', () => {
@@ -7,7 +7,6 @@ test('test builder', () => {
 
    console.log(a)
 })
-
 
 test('test', () => {
    function* testgen() {

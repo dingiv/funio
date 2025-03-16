@@ -1,9 +1,22 @@
+import { KeyType } from "@/types"
+import { builder } from "@/utils"
 
-export const FunioGenInjector = () => {
+export interface Logger {
+   debug(data: any[]): void
+   info(data: any[]): void
+   warn(data: any[]): void
+   error(data: any[]): void
+}
+
+export interface FunioGenInjectorConfig {
+   logger: Logger
+}
+
+export const FunioGenInjector = (config: Partial<FunioGenInjectorConfig>) => {
 
 }
 
-export const BInjector = () => {
+export const WebInjector = () => {
    const injector = () => {
 
    }
@@ -14,6 +27,22 @@ export const BInjector = () => {
    return injector
 }
 
-export const SInjector = () => {
+export const NodejsInjector = () => {
 
 }
+
+
+export interface InjectionQueryObject extends ReturnType<typeof InjectionQueryObject> { }
+export const InjectionQueryObject = (key: KeyType) => {
+   const ie = new InjectionQueryObjectClass(key)
+
+   return ie
+}
+
+class InjectionQueryObjectClass {
+   [s: KeyType]: any
+   constructor(key: KeyType) {
+      this.name = key
+   }
+}
+export const ieb = builder(InjectionQueryObjectClass)

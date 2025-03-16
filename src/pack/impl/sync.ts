@@ -1,8 +1,8 @@
 import { ConstructorType, UF } from "@/types"
-import { FUNIO_PACK, IS_ERROR, VALUE } from "./init"
-import { type Pack } from "."
+import { FUNIO_PACK, IS_ERROR, VALUE } from "./core"
+import { type pack } from "."
 
-export class PackClass<T> {
+export class PackSync<T> {
    get [Symbol.toStringTag]() { return FUNIO_PACK }
    declare [VALUE]: any
    get value() { return this[VALUE] as T }
@@ -37,7 +37,7 @@ export class PackClass<T> {
    //    // do nothing
    // }
 
-   then<T>(onfulfilled?: UF<T, any>, onrejected?: UF<any, any>): Pack<T>
+   then<T>(onfulfilled?: UF<T, any>, onrejected?: UF<any, any>): pack<T>
    then(onfulfilled: any, onrejected: any): any {
       if (!this[IS_ERROR]) {
          if (typeof onfulfilled === 'function') {
@@ -55,7 +55,7 @@ export class PackClass<T> {
 
    }
 
-   catch<B>(onrejected?: (reason: T) => B): Pack<B> {
+   catch<B>(onrejected?: (reason: T) => B): pack<B> {
       if (typeof onrejected === 'function' && this[IS_ERROR]) {
          onrejected(this[VALUE])
       }

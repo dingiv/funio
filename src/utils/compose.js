@@ -1,6 +1,7 @@
+
 export const curry = (func, argc = 0) => {
-   argc = Number(argc) || func.length
-   if (argc <= 0) return func
+   argc = Number(argc) || Number(func.length)
+   if (argc <= 1) return func
    const curried = (...args) => {
       if (args.length >= argc) {
          return func(...args)
@@ -11,7 +12,6 @@ export const curry = (func, argc = 0) => {
    return curried
 }
 
-
 export const compose = (...functions) => {
    return (data) => {
       for (let i = functions.length - 1; i >= 0; --i) {
@@ -21,7 +21,6 @@ export const compose = (...functions) => {
    }
 }
 
-
 export const pipeline = (...functions) => {
    return (data) => {
       for (let i = 0, len = functions.length; i < len; ++i) {
@@ -30,7 +29,6 @@ export const pipeline = (...functions) => {
       return data
    }
 }
-
 
 export const rearg = (func, indexMap = []) => {
    const len = func.length
@@ -56,7 +54,6 @@ export const rearg = (func, indexMap = []) => {
    })
    return rearged
 }
-
 
 export const partial = (f, ...args) => {
    if (!Array.isArray(args)) return (...a) => f(args, ...a)
