@@ -1,8 +1,9 @@
 
 /**
- * range，添加 range 支持
+ * @module range
+ * @factory Range
  */
-export const range: RangeConstructor = (...args: number[]) => {
+export const range: RangeFactory = (...args: number[]) => {
    let start = 0, end = 0, step = 1
    if (args.length === 1) {
       start = 0
@@ -18,7 +19,7 @@ export const range: RangeConstructor = (...args: number[]) => {
    return new RangeImpl(start, end, step)
 }
 
-export interface RangeConstructor {
+export interface RangeFactory {
    (end: number): Range
    (start: number, end: number): Range
    (start: number, end: number, step: number): Range
@@ -47,3 +48,7 @@ class RangeImpl implements Range {
       }
    }
 }
+
+const arr = [1]
+
+arr.

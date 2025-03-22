@@ -1,26 +1,13 @@
-import { $f, FPipe } from "@/index";
-import { $m, Match } from "@/match";
+import { match } from "./match";
 import { expect, test } from "vitest";
 
 test('test value-mode', () => {
-   const f: FPipe = $f(0).match(0, (a: any, b: any, c: any) => {
-      console.log('match 0')
-      console.log(a, b, c)
-      return a + b + c
-   }).match(1, (a: any, b: any, c: any) => {
-      console.log('match 1')
-      console.log(a, b, c)
-      return a + b + c
-   }).match('1', (a: any, b: any, c: any) => {
-      console.log('match "1"')
-      console.log(a, b, c)
-      return a + b + c
-   })
+   const match1 = match([
+      [0, (value) => 1],
+      ['43', (value) => 2]
+   ])
 
-
-   expect(f()).toBeTypeOf('string')
-   expect(f(1)).toBeTypeOf('string')
-   expect(f('1')).toBeTypeOf('string')
+   expect(match1(2)).toBe(1)
 })
 
 test('test regex', () => {
@@ -114,3 +101,5 @@ test('test match object 2', () => {
    expect(f({ name: 'Mike', age: 33, son: { age: 2 } })).toBeTypeOf('string')
    expect(f({ name: 'Mike', age: 33, son: { age: 3 } })).toBeUndefined()
 })
+
+

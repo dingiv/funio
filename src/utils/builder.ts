@@ -1,5 +1,4 @@
-import { ConstructorType, KeyType, NF, UF, UF_P } from "@/types";
-
+import { ConstructorType, PropKey, NF, UF } from "@/types";
 
 /**
  * 通过封装一个 class 构造函数，返回一个无须 new 即可实例化的工厂函数
@@ -9,7 +8,7 @@ export const factory = <T extends ConstructorType>(cons: T): Factory<T> => {
    const f = (...args: any[]) => new cons(...args)
    return new Proxy(f, {
       get(_, key) {
-         return (cons as any)[key]
+         return Reflect.get(cons, key)
       }
    }) as any
 }
@@ -23,12 +22,21 @@ export type Factory<T extends ConstructorType> = {
  * 接受一个工厂函数，使用工厂函数和链式调用的语法构造对象实例
  * 因为 ts 不支持高阶类型，传入一个泛型函数，builder 函数将会丢失泛型能力
  */
-export const builder = <T extends NF>(factory: T): NF<Parameters<T>, Builder<ReturnType<T>>> => {
+export const builder: BuilderFactory = <T extends NF>(factory: T): NF<Parameters<T>, Builder<ReturnType<T>>> => {
    const setter = {}
    return (...args: any[]) => dynamicBuilder(factory, args, setter) as any
 }
 
-const builderProto: any = {
+export type BuilderFactory = {
+   <T extends NF>(factory: T): NF<Parameters<T>, Builder<ReturnType<T>>>
+   factory: <T extends NF>(factory: T) => NF<Parameters<T>, Builder<ReturnType<T>>>;
+   construct: <T extends ConstructorType>(cons: T) => NF<ConstructorParameters<T>, Builder<InstanceType<T>>>;
+   template: <T extends Record<PropKey, any>>(template: T) => UF<Partial<T>, Builder<T>>;
+   from: <T extends ConstructorType>(keys?: Iterable<PropKey>) => NF<ConstructorParameters<T>, Builder<InstanceType<T>>>;
+   is: (maybeBuilder: any) => boolean;
+}
+
+const builderProto: Record<PropKey, unknown> = {
    /**
     * if a 'Builder' is applyed to the 'await', or 'yield' operator in a async generator,
     * the function will be hanged up. this is a serious bug.
@@ -53,30 +61,28 @@ const dynamicBuilder = <T extends object>(factory: NF, args: any[], setter: Reco
 const BUILDER_INSTANCE = Symbol('builder-instance')
 const BUILDER_SETTER = Symbol('builder-setter')
 
-export const isBuilder = (maybeBuilder: any) => {
+builder.is = (maybeBuilder: any) => {
    if (!maybeBuilder) return false
    return BUILDER_INSTANCE in maybeBuilder && BUILDER_SETTER in maybeBuilder
 }
 
 
-export type Builder<T extends object> =
-   {
-      [K in keyof T]-?: UF<T[K], Builder<T>>; } &
-   {
-      /**
-       * a dynamic builder will dynamic return property setter to support chaining
-       */
-      [K: KeyType]: (...args: any[]) => Builder<T>;
-   } &
-   {
-      /**
-       * if a 'Builder' is applyed to the 'await', or 'yield' operator in a async generator,
-       * the function will be hanged up. this is a serious bug.
-       * so we implement 'then' property to avoid being hanged up
-       */
-      then<R, E>(onResolve: UF<T, R>, onRejected: UF<Error, E>): Builder<T>;
-      $build: T;
-   }
+export type Builder<T extends object> = {
+   [K in keyof T]-?: UF<T[K], Builder<T>>;
+} & {
+   /**
+    * a dynamic builder will dynamic return property setter to support chaining
+    */
+   [K: PropKey]: (...args: any[]) => Builder<T>;
+} & {
+   /**
+    * if a 'Builder' is applyed to the 'await', or 'yield' operator in a async generator,
+    * the function will be hanged up. this is a serious bug.
+    * so we implement 'then' property to avoid being hanged up
+    */
+   then<R, E>(onResolve: UF<T, R>, onRejected: UF<Error, E>): Builder<T>;
+   $build: T;
+}
 
 const builderProxyHandler: ProxyHandler<any> = {
    get(target, key) {
@@ -119,12 +125,12 @@ builder.construct = <T extends ConstructorType>(cons: T): NF<ConstructorParamete
 /**
  * 接受一个对象作为模板，使用 for...in 循环，得到需要构造的键值对
  */
-builder.template = <T extends Record<KeyType, any>>(template: T): UF_P<Partial<T>, Builder<T>> => {
+builder.template = <T extends Record<PropKey, any>>(template: T): UF<Partial<T>, Builder<T>> => {
    const map = new Map
    for (const key in template) {
       map.set(key, template[key])
    }
-   const f = (init: Record<KeyType, any> = {}) => {
+   const f = (init: Record<PropKey, any> = {}) => {
       const tmp = {}
       for (const key in map.keys()) {
          if (key in init) {
@@ -143,7 +149,7 @@ builder.template = <T extends Record<KeyType, any>>(template: T): UF_P<Partial<T
 /**
  * 接受一个可迭代对象，从中获取 key，从而构造
 */
-builder.from = <T extends ConstructorType>(keys: Iterable<KeyType> = []):
+builder.from = <T extends ConstructorType>(keys: Iterable<PropKey> = []):
    NF<ConstructorParameters<T>, Builder<InstanceType<T>>> => {
    const setter = {}
    const f = () => ({})

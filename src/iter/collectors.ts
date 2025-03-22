@@ -5,8 +5,15 @@ export interface Collector<T> {
    end(value: T): void
 }
 
-class CollectorImpl<T> {
-
+class CollectorImpl<T> implements Collector<T> {
+   value: any
+   add(value: T): void {
+      throw new Error("Method not implemented.")
+   }
+   end(value: T): void {
+      throw new Error("Method not implemented.")
+   }
+   
 }
 
 export const collector = () => {

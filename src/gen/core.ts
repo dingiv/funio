@@ -2,7 +2,7 @@
 export type NonGenerator<T> = T extends Generator<any, any, any> ?
    never : (T extends AsyncGenerator<any, any, any> ? never : T)
 
-export type Injector = <T>(diqo: NonGenerator<T>) => any
+export type Injector = <T>(diqo: NonGenerator<T>) => T
 
 
 export const isGenerator = (func: Function) => {

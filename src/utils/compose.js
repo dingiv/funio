@@ -30,31 +30,6 @@ export const pipeline = (...functions) => {
    }
 }
 
-export const rearg = (func, indexMap = []) => {
-   const len = func.length
-   if (len < 2 || len !== indexMap.length) return func
-   // 检查索引
-   const tmp = indexMap.map((index, order) => ({ order, index }))
-   tmp.sort((a, b) => a.index - b.index)
-   tmp.forEach((x, i) => (x.index = i))
-   tmp.sort((a, b) => a.order - b.order)
-   const newMap = tmp.map((x) => x.index)
-   const rearged = (...args) => {
-      const newArgs = []
-      for (let i = 0, len = args.length; i < len; ++i) {
-         newArgs[newMap[i]] = args[i]
-      }
-      return func(...newArgs)
-   }
-   Reflect.defineProperty(rearged, 'length', {
-      value: func.length,
-      writable: false,
-      enumerable: false,
-      configurable: true
-   })
-   return rearged
-}
-
 export const partial = (f, ...args) => {
    if (!Array.isArray(args)) return (...a) => f(args, ...a)
    const len = Math.max(Number(f.length) || 0, Number(args.length) || 0)

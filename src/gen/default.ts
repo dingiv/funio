@@ -1,4 +1,5 @@
 import { Injector } from "./core"
+import { Diqo } from "./diqo"
 
 
 export interface Logger {
@@ -8,32 +9,53 @@ export interface Logger {
    error(data: any[]): void
 }
 
-export interface FunioInjector extends Injector {
+export interface FunioSubInjector extends Injector {
    priority: number
    primitiveInjector: Injector,
-   noneInjector: Injector,
    objectInjector: Injector,
    functionInjector: Injector
 }
 
 export interface FunioInjectorConfig {
    logger: Logger
-   queue: FunioInjector[]
+   injectors: FunioSubInjector[]
+   prefetch: Diqo[]
+   
+}
+
+const doInject = (config: FunioInjectorConfig, diqo: any) => {
+
+   for (let i = 0; i < config.injectors.length; i++) {
+
+   }
+
+}
+
+export const validateConfig = (config: Partial<FunioInjectorConfig>) => {
+
+   return {
+
+   } as FunioInjectorConfig
 }
 
 export const createFunioInjector = (config: Partial<FunioInjectorConfig>) => {
-   config = { ...config }
-   function doInject() {
-      
-   }
-   return async (diqo: any) => {
+   const cfg = validateConfig(config)
+   const ij = async (diqo: any) => {
       diqo = await diqo
+      if (diqo == null) {
+         throw Error('cannot inject value for diqo: null or undefined')
+      }
       switch (typeof diqo) {
          case 'object':
-         case 'undefined':
          case 'function':
       }
+
+      return 0
    }
+
+   ij.priority = 0
+
+   return ij
 }
 
 export const WebInjector = () => {
@@ -51,3 +73,10 @@ export const NodejsInjector = () => {
 
 }
 
+export const CtxInjector = () => {
+
+}
+
+export const WorkerInjector = () => {
+
+}

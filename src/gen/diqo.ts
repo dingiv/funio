@@ -1,5 +1,5 @@
 import { builder } from "@/utils"
-import { KeyType } from "@/types"
+import { PropKey } from "@/types"
 
 export const GolbalModule = Symbol.for('global_module')
 
@@ -24,7 +24,7 @@ export interface Diqo {
 }
 
 export class Diqo implements Diqo {
-   constructor(key: KeyType) {
+   constructor(key: PropKey) {
       this.key = key
    }
 }
@@ -33,7 +33,7 @@ export class Diqo implements Diqo {
 /**
  * default di API of FunioGenInjector
  */
-export const di = (id: KeyType) => {
+export const di = (id: PropKey) => {
    return defaultBuilder(id)
 }
 const defaultBuilder = builder.construct(Diqo)

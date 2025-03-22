@@ -1,6 +1,5 @@
-
-import { First, Gt } from "./meta";
 import { NF, UF } from "./types";
+
 
 /**
  * 柯里化
@@ -12,9 +11,9 @@ import { NF, UF } from "./types";
  * }  
  * // 该函数值计算为一个参数 
  */
-export const curry: CurryFunction
+export const curry: CurryHK
 
-interface CurryFunction {
+interface CurryHK {
    <R>(f: () => R): () => R;
    <A, B>(f: (a: A) => B): CurryFunction1<A, B>;
    <A, B, C>(f: (a: A, b: B) => C): CurryFunction2<A, B, C>;
@@ -130,14 +129,88 @@ type CurryFromArray<A extends any[], T> =
    : NF<any[], T>;
 
 
+/**
+ * 该函数接受一个多元函数，并且接受一个args数组，延迟调用该函数，直到参数集齐。
+ * 例如：当其接受一个三元函数，并传入一个参数数组，可以使用自己作为站位符，表示未知参数的位置，
+ * 此时，返回一个二元函数，且是一个curry化的函数，
+ * 该函数将会在调用后，依次填入缺失的参数，当参数足够时进行完全调用
+ * @alias $p
+ * 
+ * @example  
+ * f(a: string, b: number, c: boolean) { console.log(a, b, c); } 
+ * const args = [$p, 1, $p]
+ * const pf = $p(f, args)  // pf : (a: string, c: boolean) => void
+ * 
+ * pf('hello world', true)  // hello world 1 true
+ * pf('partial')(false) // partial 1 false
+ * 
+ * const pf2 = pf('foo')
+ * pf2(true) // foo 1 true
+ */
+export const partial: PartialHK
+
+// 定义 PartialFunction 接口
+export interface PartialHK {
+   <FARG extends any[], R>(f: NF<FARG, R>): CurryFromArray<FARG, R>
+   <R, RARG extends any[]>(f: NF<[never], R>, ...args: RARG): FF<NArray<RARG['length']>, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 1>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 2>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 3>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 4>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 5>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 6>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 7>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+   <FARG extends any[], R, RARG extends RR<FARG, 8>>(f: NF<FARG, R>, ...args: RARG):
+      FF<FARG, RARG, R>
+}
+
+export type $p = PartialHK
+
+type With$P<T> = {
+   [index in keyof T]: T[index] | $p
+}
+
+// 将B中的$p替换为A中对应位置的类型，同时将不需要的值置为$p
+type Get$PPlace<A extends any[], B extends any[], C = AppendFromOther<A, B>> = {
+   [K in keyof C]: K extends keyof B ? (B[K] extends $p ? C[K] : $p) : C[K]
+}
+type Filter$P<A extends any[], T = $p> = A extends [infer First, ...infer Rest]
+   ? (First extends T
+      ? Filter$P<Rest, T>
+      : [First extends boolean ? boolean : First, ...Filter$P<Rest, T>])
+   : []
+type AppendFromOther<A extends any[], B extends any[]> =
+   Gt<A['length'], B['length']> extends true ?
+   A : (
+      number extends A['length'] ? (A extends (infer T)[] ? [...B, ...a: T[]] : [])
+      : (B[A['length']] extends infer T ? AppendFromOther<[...A, T extends $p ? unknown : T], B> : [...A, unknown])
+   );
+
+type FF<A extends any[], B extends any[], R, C = Get$PPlace<AppendFromOther<A, B>, B>> =
+   CurryFromArray<Filter$P<C extends any[] ? C : any[]>, R>
+type RR<FARG extends any[], N extends number> = With$P<FirstNArgs<FARG, N>>
+
+/**
+ * @module utils
+ * @alias partial
+ */
+export const $p: PartialHK
+
 
 /**
  * 组合函数
  * 将多个一元函数组合成一个一元函数，数据流流向为从右向左
  */
-export const compose: ComposeFunction
+export const compose: ComposeHK
 
-interface ComposeFunction {
+interface ComposeHK {
    <A, B>(f1: UF<A, B>): UF<A, B>;
    <A, B, C>(f2: UF<B, C>, f1: UF<A, B>): UF<A, C>;
    <A, B, C, D>(f3: UF<C, D>, f2: UF<B, C>, f1: UF<A, B>): UF<A, D>;
@@ -178,13 +251,14 @@ interface ComposeFunction {
    ): UF<A, I>;
 }
 
+
 /**
- * 组合函数
+ * 管道化函数
  * 将多个一元函数组合成一个一元函数，数据流流向为从左向右
  */
-export const pipeline: PipelineFunction
+export const pipeline: PipelineHK
 
-interface PipelineFunction {
+interface PipelineHK {
    <A, B>(f1: UF<A, B>): UF<A, B>;
    <A, B, C>(f1: UF<A, B>, f2: UF<B, C>): UF<A, C>;
    <A, B, C, D>(f1: UF<A, B>, f2: UF<B, C>, f3: UF<C, D>): UF<A, D>;
@@ -223,137 +297,4 @@ interface PipelineFunction {
       f7: UF<G, H>,
       f8: UF<H, I>
    ): UF<A, I>;
-}
-
-/**
- * 参数重排
- * 将一个函数的参数进行重排
- * @param indexMap 表示重排参数顺序的数组;
- * @example 
- * const f = rearg((a, b, c) => {}, [1,0,2])
- * f // (b, a, c) => {}
- * @tutorial 重排之前，会先计算函数的长度。计算方法为取函数的长度或者重排数组的长度中的较大值
- */
-export const rearg: ReargFunction
-
-interface ReargFunction {
-   <R>(func: () => R): typeof func;
-   <T, R>(func: UF<T, R>): typeof func;
-   <T extends NArray<2>, N extends PN<2>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends NArray<3>, N extends PN<3>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends NArray<4>, N extends PN<4>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends NArray<5>, N extends PN<5>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends NArray<6>, N extends PN<6>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends NArray<7>, N extends PN<7>, R>(func: NF<T, R>, indexMap: N): NF<RA<T, N>, R>;
-   <T extends any[], N extends T['length'], R>(func: NF<T, R>, indexMap: NArray<N>): NF<NArray<N>, R>;
-}
-type NArray<N extends number, R = unknown, T extends any[] = []> = T['length'] extends N ? T : NArray<N, R, [...T, R]>;
-type LessThan<T extends number, U extends number[] = []> =
-   U['length'] extends T
-   ? U[number]
-   : LessThan<T, [...U, U['length']]>;
-type Permutations<T, K = T> =
-   [T] extends [never]
-   ? []
-   : (K extends any
-      ? [K, ...Permutations<Exclude<T, K>>]
-      : never
-   )
-type PN<T extends number> = Permutations<LessThan<T>>;
-type RA<T extends any[], IndexMap extends number[]> = {
-   [K in keyof IndexMap]: IndexMap[K] extends keyof T ? T[IndexMap[K]] : never;
-}
-
-/**
- * 该函数接受一个多元函数，并且接受一个args数组，延迟调用该函数，直到参数集齐。
- * 例如：当其接受一个三元函数，并传入一个参数数组，可以使用自己作为站位符，表示未知参数的位置，
- * 此时，返回一个二元函数，且是一个curry化的函数，
- * 该函数将会在调用后，依次填入缺失的参数，当参数足够时进行完全调用
- * @alias $p
- * 
- * @example  
- * f(a: string, b: number, c: boolean) { console.log(a, b, c); } 
- * const args = [$p, 1, $p]
- * const pf = $p(f, args)  // pf : (a: string, c: boolean) => void
- * 
- * pf('hello world', true)  // hello world 1 true
- * pf('partial')(false) // partial 1 false
- * 
- * const pf2 = pf('foo')
- * pf2(true) // foo 1 true
- */
-export const partial: $p
-
-// 定义 PartialFunction 接口
-interface $p {
-   <FARG extends any[], R>(f: NF<FARG, R>): CurryFromArray<FARG, R>
-   <R, RARG extends any[]>(f: NF<[never], R>, ...args: RARG): FF<NArray<RARG['length']>, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 1>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 2>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 3>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 4>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 5>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 6>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 7>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-   <FARG extends any[], R, RARG extends RR<FARG, 8>>(f: NF<FARG, R>, ...args: RARG):
-      FF<FARG, RARG, R>
-}
-
-type With$P<T> = {
-   [index in keyof T]: T[index] | $p
-}
-
-// 将B中的$p替换为A中对应位置的类型，同时将不需要的值置为$p
-type Get$PPlace<A extends any[], B extends any[], C = AppendFromOther<A, B>> = {
-   [K in keyof C]: K extends keyof B ? (B[K] extends $p ? C[K] : $p) : C[K]
-}
-type Filter$P<A extends any[], T = $p> = A extends [infer First, ...infer Rest]
-   ? (First extends T
-      ? Filter$P<Rest, T>
-      : [First extends boolean ? boolean : First, ...Filter$P<Rest, T>])
-   : []
-type AppendFromOther<A extends any[], B extends any[]> =
-   Gt<A['length'], B['length']> extends true ?
-   A : (
-      number extends A['length'] ? (A extends (infer T)[] ? [...B, ...a: T[]] : [])
-      : (B[A['length']] extends infer T ? AppendFromOther<[...A, T extends $p ? unknown : T], B> : [...A, unknown])
-   );
-
-type FF<A extends any[], B extends any[], R, C = Get$PPlace<AppendFromOther<A, B>, B>> =
-   CurryFromArray<Filter$P<C extends any[] ? C : any[]>, R>
-type RR<FARG extends any[], N extends number> = With$P<FirstNArgs<FARG, N>>
-
-
-
-/**
- * 该函数接受一个多元函数，并且接受一个args数组，延迟调用该函数，直到参数集齐。
- * 例如：当其接受一个三元函数，并传入一个参数数组，可以使用自己作为站位符，表示未知参数的位置，
- * 此时，返回一个二元函数，且是一个curry化的函数，
- * 该函数将会在调用后，依次填入缺失的参数，当参数足够时进行完全调用
- * @alias partial
- * 
- * @example  
- * f(a: string, b: number, c: boolean) { console.log(a, b, c); } 
- * const args = [$p, 1, $p]
- * const pf = $p(f, args)  // pf : (a: string, c: boolean) => void
- * 
- * pf('hello world', true)  // hello world 1 true
- * pf('partial')(false) // partial 1 false
- * 
- * const pf2 = pf('foo')
- * pf2(true) // foo 1 true
- */
-export const $p: $p
-
-
-export const spread: SpreadFunction
-interface SpreadFunction {
-   <A extends any[], T>(f: NF<A, T>): UF<A, T>
 }

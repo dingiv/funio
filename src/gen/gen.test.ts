@@ -46,6 +46,8 @@ test('test genject', async () => {
 })
 
 test('test genject - recrusive', async () => {
+   
+
    async function* inner(name: string) {
       const userDiqo = di('user')
       const ww: User = yield userDiqo.name('ls').version('34.32.3')
@@ -76,6 +78,7 @@ test('test genject - recrusive', async () => {
       }
       return diqo.name ?? 3
    })
+ 
 
    console.log(v)
 })

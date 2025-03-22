@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { $f } from '@/index'
+import { $f } from '@/pack'
 
 
 test('test sync pipe', () => {

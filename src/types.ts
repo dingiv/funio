@@ -1,35 +1,42 @@
 
 /**
- * 一元函数
+ * 原始类型
  */
-export type UF<A = any, B = any> = (arg: A) => B
-export type UF_P<A = any, B = any> = (arg?: A) => B
+export type Primitive = boolean | number | bigint | string | symbol | undefined | null
+export type Simple = boolean | number | bigint | string | symbol
+export type ToPrimitive<T> = T extends object ? never : T
+
+export type PropKey = string | number | symbol
+export type RRecord<T> = Record<PropKey, T>
+export type RecordKey<T> = keyof T
+export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
+
+export type TypeofResult =
+   | "undefined"
+   | "boolean"
+   | "number"
+   | "bigint"
+   | "string"
+   | "symbol"
+   | "object"
+   | "function"
 
 /**
- * 多元函数
+ * Unary Function 
+ * @descrption
+ * a function that needs only one param and returns its computed value
+ */
+export type UF<A = any, B = any> = (arg: A) => B
+
+/**
+ * 多元函数 
  */
 export type NF<A extends any[] = any[], R = any> = (...args: A) => R
 
 /**
- * 原始类型
+ * 谓词
  */
-export type Primitive = boolean | number | bigint | string | symbol | undefined | null
+export type Predicate<T> = UF<T, boolean>
 
-export type KeyType = string | number | symbol
-export type RRecord<T> = Record<KeyType, T>
-export type RecordKey<T> = keyof T
-export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
-
-export const Type = {
-   isNumber(n: any) { return typeof n === 'number' },
-   isString(n: any) { return typeof n === 'string' },
-   isBoolean(n: any) { return typeof n === 'boolean' },
-   isUndefined(n: any) { return n === undefined },
-   isNull(n: any) { return n === null },
-   isObject(n: any) { return n instanceof Object },
-   isFunction(n: any) { return typeof n === 'function' },
-   isPrimitive(n: any) { return !(n instanceof Object) },
-   as<T>(n: any) { return n as T }
-}
 
 export { }

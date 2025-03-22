@@ -1,4 +1,4 @@
-import { RRecord, KeyType } from "@/types"
+import { RRecord, PropKey } from "@/types"
 import { factory } from "@/utils"
 
 /**
@@ -25,12 +25,12 @@ export const PipeConfig = factory(class PipeConfig {
 
 export type Pipeline = ReturnType<typeof Pipeline>
 export const Pipeline = factory(class Pipeline {
-   lineMap: Record<KeyType, PipeConfig[]>
-   state: Record<KeyType, Record<KeyType, any>>
-   main: KeyType
+   lineMap: Record<PropKey, PipeConfig[]>
+   state: Record<PropKey, Record<PropKey, any>>
+   main: PropKey
    env: Record<string, any>
    shiftMap?: ShiftMap
-   constructor(configMap: Record<KeyType, PipeConfig[]>, main: KeyType, env: Record<string, any>) {
+   constructor(configMap: Record<PropKey, PipeConfig[]>, main: PropKey, env: Record<string, any>) {
       this.lineMap = configMap
       this.main = main
       this.state = {}
@@ -41,14 +41,14 @@ export const Pipeline = factory(class Pipeline {
       this.shiftMap = ShiftMap(this)
    }
 
-   pushPipe(line: KeyType, config: PipeConfig) {
+   pushPipe(line: PropKey, config: PipeConfig) {
       if (!this.lineMap[line]) {
          this.lineMap[line] = []
       }
       this.lineMap[line].push(config)
    }
 
-   insertPipe(line: KeyType, config: PipeConfig) {
+   insertPipe(line: PropKey, config: PipeConfig) {
       if (!this.lineMap[line]) {
          this.lineMap[line] = []
       }
@@ -68,7 +68,7 @@ const CTX_CONFIG = Symbol('pipe_ctx_config')
 
 export interface PipeContext extends ReturnType<typeof PipeContext> { }
 export const PipeContext = factory(class PipeContext {
-   [key: KeyType]: any
+   [key: PropKey]: any
    declare [CTX_PIPELINE]: Pipeline
    declare [CTX_TEMP]: RRecord<any>
    declare [CTX_THIS]: object
@@ -124,7 +124,7 @@ const ShiftMap = function () {
    function dummy() { }
 
    const proxyHandler = {
-      get(target: any, key: KeyType) {
+      get(target: any, key: PropKey) {
          if (!(key in target[CONFIG])) return dummy
          let tmp = target[key]
          if (!tmp) {
@@ -158,7 +158,7 @@ export const executePipeline = (pipeline: Pipeline, data: any, thisArg: any) => 
    return executeLine(pipeline, pipeline.main, data, thisArg)
 }
 
-const executeLine = (pipeline: Pipeline, line: KeyType, data: any, thisArg: any) => {
+const executeLine = (pipeline: Pipeline, line: PropKey, data: any, thisArg: any) => {
    let type: boolean = StatusType.OK, index = 0, isAsync = false
    const trunkConfig = pipeline.lineMap[line], states = pipeline.state
 
