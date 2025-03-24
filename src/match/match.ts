@@ -3,12 +3,12 @@ import { typu } from "./type";
 
 /**
  * @module match
- * 模式匹配三要素：
+ * 模式匹配四要素：
  * 1. 待匹配的值 data
  * 2. 匹配模式 pattern
  * 3. 回调函数 callback
  * 
- * arm = pattern + callback
+ * pattern = 
  * 
  * 支持的匹配模式
  * 1. 非空基本值
@@ -25,7 +25,7 @@ import { typu } from "./type";
  * 2. 正则匹配模式
  * 3. Range 模式匹配
  */
-export const match: MatchFactory = (patterns: PatternLike[]) => {
+export const match: MatchFactory = (patterns: PatternSugar[]) => {
    const patternList: any[] = [...patterns]
    for (let i = 0; i < patternList.length; i++) {
       try {
@@ -39,73 +39,71 @@ export const match: MatchFactory = (patterns: PatternLike[]) => {
       return () => undefined
    }
 
-   return <DataType>(data: DataType) => doMatch(data, patternList)
+   return <DataType>(data: DataType) => exec(data, patternList)
 }
 
 export interface MatchFactory {
    <PickType = any, ResultType = any>
-      (arms: PatternLike<PickType, ResultType>[]): UF<any, ResultType | undefined>
+      (arms: PatternSugar<PickType, ResultType>[]): UF<any, ResultType | undefined>
    exec<PickType = any, ResultType = any>
       (data: any, arms: Pattern<PickType, ResultType>[]): ResultType | undefined;
 }
 
-export const pattern: PatternFactory = <PickType>(...params: any[]): Pattern<PickType> => {
-   const {
-      0: a = pattern.defa, 1: b, 2: c
-   } = params
-   if (typu.isNone(params)) {
-      return pattern.default
-   }
-
-   switch (typeof params) {
-      case 'function':
-         return parseFunction(params)
-      case 'object':
-         return typu.isIterable(params) ?
-            parseIterable(params as any) :
-            parseIterable(params as any)
-      default:
-         return parseSimple(params)
+const exec = <PickType = any, ResultType = any>(
+   data: any, patterns: Pattern<PickType, ResultType>[]
+) => {
+   for (let index = 0; index < patterns.length; ++index) {
+      try {
+         const p = patterns[index]
+         const pick = p.pick(data)
+         if (p.test(pick)) {
+            return p.callback(pick)
+         }
+      } catch {
+         continue
+      }
    }
 }
 
-export interface PatternFactory {
-   <PickType, ResultType>(param: PatternParam<PickType, ResultType>):
-      [pick: UF<any, PickType>, test: UF<PickType, ResultType>]
-   <PickType, ResultType>(
-      param: PatternParam<PickType, ResultType>,
-      callback: UF<PickType, ResultType>
-   ): Pattern<PickType, ResultType>
-   <PickType, ResultType>(
-      pick: PatternParam<PickType, ResultType>,
-      test: PatternParam<PickType, ResultType>,
-      callback: UF<PickType, ResultType>
-   ): Pattern<PickType, ResultType>
-   <PickType, ResultType>(...args: any[]): Pattern<PickType, ResultType>
-   map<PickType, ResultType>(params: PatternLike<PickType, ResultType>[]): Pattern<PickType, ResultType>[]
-   isPattern(maybe: any): boolean;
-   defaultPick<T>(value: any): T;
-   defaultTest(value: any): boolean;
-   defaultCallback<T>(value: any): T;
-   default: Pattern
-}
+match.exec = exec
 
-pattern.of = (params: PatternLike[]) => {
-   const tmp: Pattern[] = []
 
+/**
+ * @module match
+ * @description
+ * 模式
+ * pattern = pick + test + callback
+ */
+export const pattern: PatternFactory = <PickType, ResultType>(
+   pick?: UF<any, PickType>, test?: UF<PickType, boolean>, callback?: UF<PickType, ResultType>
+): Pattern<PickType, ResultType> => {
+   const tmp = Object.create(patternProto)
+   tmp.pick = pick ?? typu.id
+   tmp.test = test ?? typu.notNone
+   tmp.callback = callback ?? typu.as
    return tmp
 }
 
-pattern.isPattern = (maybe: any): boolean => {
+export interface PatternFactory {
+   <PickType, ResultType>(
+      pick?: UF<any, PickType>, test?: UF<PickType, boolean>, callback?: UF<PickType, ResultType>
+   ): Pattern<PickType, ResultType>
 
+   from(): Pattern
 
-   return true
+   isPattern(maybe: any): boolean
+   defaultPick<T>(value: any): T
+   defaultTest(value: any): boolean
+   defaultCallback<T>(value: any): T
 }
 
-pattern.defaultPick = typu.as
+pattern.isPattern = (maybe: any): boolean => Reflect.has(maybe, FUNIO_PATTERN)
+pattern.defaultPick = typu.id
 pattern.defaultTest = typu.notNone
 pattern.defaultCallback = typu.as
-pattern.default = [typu.as, typu.notNone, typu.as]
+pattern.from = () => {
+
+}
 
 const parseSimple = (p: Simple) => {
    return {
@@ -123,7 +121,7 @@ const parseFunction = (p: UF) => {
    }
 }
 
-const parseIterable = <T extends PatternParam>(p: Iterable<T>) => {
+const parseIterable = <T extends PatternDestructSugar>(p: Iterable<T>) => {
    const tmp: any[] = []
    let index = 0
    for (const v of p) {
@@ -140,62 +138,43 @@ const parseRecord = () => {
    }
 }
 
-export type Pattern<PickType = any, ResultType = any> = [
-   pick: (data: any) => PickType,
-   test: (picked: PickType) => boolean,
-   callback: (pick: PickType) => ResultType
-]
+export type Pattern<PickType = any, ResultType = any> = {
+   pick: UF<any, PickType>,
+   test: UF<PickType, boolean>,
+   callback: UF<PickType, ResultType>,
+   usePick: UF<UF<any, PickType>, Pattern<PickType, ResultType>>,
+   useTest: UF<UF<PickType, boolean>, Pattern<PickType, ResultType>>,
+   useCallback: UF<UF<PickType, ResultType>, Pattern<PickType, ResultType>>,
+   p: UF<UF<any, PickType>, Pattern<PickType, ResultType>>,
+   t: UF<UF<PickType, boolean>, Pattern<PickType, ResultType>>,
+   c: UF<UF<PickType, ResultType>, Pattern<PickType, ResultType>>,
+}
 
-export type PatternParam<DataType = any, T = any> =
+const FUNIO_PATTERN = Symbol('funio pattern')
+const patternProto: Record<PropKey, any> = {
+   [Symbol.toStringTag]: 'FunioPattern',
+   [FUNIO_PATTERN]: FUNIO_PATTERN,
+   pick: typu.id,
+   test: typu.notNone,
+   callback: typu.as,
+   usePick(this: Pattern, pick: UF) { this.pick = pick; return this },
+   p(this: Pattern, pick: UF) { this.pick = pick; return this },
+   useTest(this: Pattern, test: UF) { this.test = test; return this },
+   t(this: Pattern, test: UF) { this.test = test; return this },
+   useCallback(this: Pattern, callback: UF) { this.callback = callback; return this },
+   c(this: Pattern, callback: UF) { this.callback = callback; return this },
+}
+
+export type PatternSugar<PickType = any, ResultType = any> =
+   [pick: PatternDestructSugar<any>, callback: UF<PickType, ResultType>] |
+   [pick: PatternDestructSugar<any>, test: PatternDestructSugar<any>, callback: UF<PickType, ResultType>]
+
+export type PatternDestructSugar<T = any> =
    Simple |
-   UF<DataType, T> |
-   Iterable<PatternParam<DataType, T>> |
-   Iterator<PatternParam<DataType, T>> |
-   RecordPattern<DataType, T>
+   UF<any, T> |
+   Iterable<PatternDestructSugar<T>> |
+   RecordPattern<T>
 
-export interface RecordPattern<DataType, T> {
-   [key: PropKey]: PatternParam<DataType, T>; // Record 的等效形式
-}
-
-export type PatternLike<PickType = any, ResultType = any> =
-   [param: PatternParam<any>, callback: UF<PickType, ResultType | undefined>] |
-   Pattern<PickType, ResultType>
-
-const doMatch = <PickType = any, ResultType = any>(
-   data: any, patterns: Pattern<PickType, ResultType>[]
-) => {
-   for (let index = 0; index < patterns.length; ++index) {
-      try {
-         const p = patterns[index]
-         const pick = p[0](data)
-         if (p[1](pick)) {
-            return p[2](pick)
-         }
-      } catch {
-         continue
-      }
-   }
-}
-
-match.exec = doMatch
-
-interface StringMatchPattern {
-   startsWith(): any;
-   endsWith(): any;
-   includes(): any;
-   regex(): any;
-   asBool(): any;
-   asInt(): any;
-   asFloat(): any;
-   asJSON(): any;
-}
-
-interface ArrayMatchPattern {
-   length(): any;
-   empty(): any;
-   notEmpty(): any;
-   includes(): any;
-   notIncludes(): any;
-   every(): any;
-   some(): any;
+export interface RecordPattern<T> {
+   [key: PropKey]: PatternDestructSugar<T>;
 }

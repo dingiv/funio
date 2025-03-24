@@ -22,8 +22,9 @@ export type Factory<T extends ConstructorType> = {
  * 接受一个工厂函数，使用工厂函数和链式调用的语法构造对象实例
  * 因为 ts 不支持高阶类型，传入一个泛型函数，builder 函数将会丢失泛型能力
  */
-export const builder: BuilderFactory = <T extends NF>(factory: T): NF<Parameters<T>, Builder<ReturnType<T>>> => {
+export const builder: BuilderFactory = <T extends NF>(factory?: T): NF<Parameters<T>, Builder<ReturnType<T>>> => {
    const setter = {}
+   factory = factory ?? ((...args) => ({})) as T
    return (...args: any[]) => dynamicBuilder(factory, args, setter) as any
 }
 

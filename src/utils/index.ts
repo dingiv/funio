@@ -1,6 +1,7 @@
 import { PropKey } from '@/types'
 
 export * from './builder'
+export * as lang from './lang'
 
 export function reverse(object: any) {
    const tmp = {}

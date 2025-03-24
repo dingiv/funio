@@ -1,10 +1,10 @@
-import { Diqo, di } from "@/diqo";
+import { di } from "./diqo";
 import { genject } from "./core";
 import { test } from "vitest";
-import { isBuilder } from "@/utils";
+import { isBuilder } from "@/utils/";
 
-test('test builder', () => {
-   const a = di('helle').abe(123).then
+test('test builder', async () => {
+   const a = await di('helle').abe(123)
 
    console.log(a)
 })
@@ -46,7 +46,7 @@ test('test genject', async () => {
 })
 
 test('test genject - recrusive', async () => {
-   
+
 
    async function* inner(name: string) {
       const userDiqo = di('user')
@@ -78,7 +78,7 @@ test('test genject - recrusive', async () => {
       }
       return diqo.name ?? 3
    })
- 
+
 
    console.log(v)
 })

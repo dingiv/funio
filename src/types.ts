@@ -8,7 +8,7 @@ export type ToPrimitive<T> = T extends object ? never : T
 
 export type PropKey = string | number | symbol
 export type RRecord<T> = Record<PropKey, T>
-export type RecordKey<T> = keyof T
+export type KeyOf<T> = keyof T
 export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
 
 export type TypeofResult =
