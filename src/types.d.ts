@@ -5,9 +5,7 @@
 export type Primitive = boolean | number | bigint | string | symbol | undefined | null
 export type Simple = boolean | number | bigint | string | symbol
 export type ToPrimitive<T> = T extends object ? never : T
-
 export type PropKey = string | number | symbol
-export type RRecord<T> = Record<PropKey, T>
 export type KeyOf<T> = keyof T
 export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
 
@@ -21,22 +19,27 @@ export type TypeofResult =
    | "object"
    | "function"
 
-/**
- * Unary Function 
- * @descrption
- * a function that needs only one param and returns its computed value
- */
-export type UF<A = any, B = any> = (arg: A) => B
+export type Some<T = unknown> = NonNullable<T>
+export type None = null | undefined
+export type Option<T> = T | None
+export type Result<L, R> = L | R | None
+export type Awaity<T> = T | Promise<T>
 
-/**
- * 多元函数 
- */
+// unarity function
+export type UF<A = any, B = any> = (arg: A) => B
+// optional unarity function
+export type OUF<A = any, B = any> = (arg?: A) => B
+// binary function
+export type BF<A = any, B = any, C = any> = (arg1: A, arg2: B) => C
+// narity function
 export type NF<A extends any[] = any[], R = any> = (...args: A) => R
 
-/**
- * 谓词
- */
+// predicate function
 export type Predicate<T> = UF<T, boolean>
 
-
-export { }
+// assertion error
+export type FunioAssertionError = {
+   message: string
+   name: string
+   stack?: string
+}

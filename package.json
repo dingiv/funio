@@ -19,12 +19,11 @@
       "test": "vitest"
    },
    "devDependencies": {
-      "@types/node": "^20.12.12",
-      "fp-ts": "^2.16.9",
-      "typescript": "^5.4.5",
-      "vite": "^5.2.11",
+      "@types/node": "^20.19.9",
+      "typescript": "^5.8.3",
+      "vite": "^7.0.6",
       "vite-plugin-dts": "^3.9.1",
-      "vitest": "^1.6.0"
+      "vitest": "^3.2.4"
    },
    "exports": {
       "default": "./dist/fp.js",
