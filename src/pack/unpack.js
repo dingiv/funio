@@ -19,12 +19,13 @@ const UnpackImpl = class Unpack {
 export const Unpack = function () {
    const un = (value, error) => new UnpackImpl(value, error)
    un.from = (result) => new UnpackImpl(result.value, result.isError)
-   un.awaityFrom = (result) => {
-      if (Typu.isPromise(result)) {
-         return result.then((x) => Unpack.from(x))
-      } else {
-         return Unpack.from(result)
-      }
-   }
    return un
 }()
+
+export const mapAwaity = (result, f) => {
+   if (Typu.isPromise(result)) {
+      return result.then(f)
+   } else {
+      return f(result)
+   }
+}

@@ -12,4 +12,5 @@ export const Lang = Object.freeze({
    identity<T = any>(x: T) { return x },
    as<T = any>(x: any) { return x as T },
    new<A extends any[], B>(cons: ConstructorType<A, B>, ...args: A) { return new cons(...args) },
+   throw(e: any) { throw e },
 })

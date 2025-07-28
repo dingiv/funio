@@ -1,9 +1,14 @@
-import { Result, Option, Awaity } from "@/types"
+import { Option, Either, Awaity } from "@/types"
+
+export interface Result<Val, Err> {
+   value: Either<Val, Err>
+   isErr: boolean
+}
 
 export const Unpack: UnpackFactory
 
 export type Unpack<Val, Err> = {
-   get value(): Result<Val, Err>
+   get value(): Either<Val, Err>
    get ok(): Option<Val>
    get err(): Option<Err>
    get isOk(): boolean
@@ -14,11 +19,8 @@ export type Unpack<Val, Err> = {
 
 export interface UnpackFactory {
    <Val, Err>(value: Val | Err, error: boolean): Unpack<Val, Err>
-   from<Val, Err>(result: ResultWrapper<Val, Err>): Unpack<Val, Err>
-   awaityFrom<Val, Err>(result: Awaity<ResultWrapper<Val, Err>>): Awaity<Unpack<Val, Err>>
+   from<Val, Err>(result: Result<Val, Err>): Unpack<Val, Err>
+   awaityFrom<Val, Err>(result: Awaity<Result<Val, Err>>): Awaity<Unpack<Val, Err>>
 }
 
-export interface ResultWrapper<Val, Err> {
-   value: Result<Val, Err>
-   isError: boolean
-}
+export function mapAwaity<Val, Err>(result: Awaity<Result<Val, Err>>): Awaity<Unpack<Val, Err>>

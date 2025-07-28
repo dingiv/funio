@@ -21,8 +21,8 @@ export type TypeofResult =
 
 export type Some<T = unknown> = NonNullable<T>
 export type None = null | undefined
-export type Option<T> = T | None
-export type Result<L, R> = L | R | None
+export type Option<T> = Some<T> | None
+export type Either<L, R> = L | R
 export type Awaity<T> = T | Promise<T>
 
 // unarity function

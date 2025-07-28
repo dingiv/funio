@@ -1,25 +1,32 @@
 import { Awaity } from "@/types";
-import { ResultWrapper } from "./unpack";
+import { Result } from "./unpack";
 
 export const Pipe: PipeFactory
-export const executePipeline: <T, R>(pipeline: Pipe[], data: T, isError: boolean, ctx?: R) => Awaity<ResultWrapper<T, R>>
+export const execPipeline: <T, R, CTX>(
+   pipeline: Pipe[], argv: T, isErr: boolean, ctx?: CTX
+) => Awaity<Result<T, R>>
 
 export interface PipeProcessor<T, R> {
    (input: T, arg: any, thisArg?: any): R;
 }
 
-export interface Pipe<Input = any, Output = any> {
+export interface Pipe {
    callback: { 0: {}, 1: {} }
    argument: any
-   args_(args: any): Pipe
-   ok_some_(f: PipeProcessor<Input, Output>): Pipe
-   ok_none_(f: PipeProcessor<Input, Output>): Pipe
-   error_some_(f: PipeProcessor<Input, Output>): Pipe
-   error_none_(f: PipeProcessor<Input, Output>): Pipe
-   error_(f: PipeProcessor<Input, Output>): Pipe
+   await(): Pipe
+   onOk<T, R>(f: PipeProcessor<T, R>): Pipe
+   onErr<T, R>(f: PipeProcessor<T, R>): Pipe
+   onErr<T, R>(f: PipeProcessor<T, R>): Pipe
+   onSome<T, R>(f: PipeProcessor<T, R>): Pipe
+   onNone<T, R>(f: PipeProcessor<T, R>): Pipe
+   onOkSome<T, R>(f: PipeProcessor<T, R>): Pipe
+   onOkNone<T, R>(f: PipeProcessor<T, R>): Pipe
+   onErrSome<T, R>(f: PipeProcessor<T, R>): Pipe
+   onErrNone<T, R>(f: PipeProcessor<T, R>): Pipe
 }
 
 export interface PipeFactory {
-
+   <T, R>(onOkSome?: PipeProcessor<T, R>): Pipe
+   awaitPipe: Pipe
 }
 

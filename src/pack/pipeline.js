@@ -1,30 +1,34 @@
-import { Typu } from '@/shared';
+import { Lang, Typu } from '@/shared';
 
 export const Pipe = function () {
    class Pipe {
-      callback = { 0: {}, 1: {} }
+      callback = { 0: {/* ok */ }, 1: {/* err */ } }
       argument = null
-      args_(args) { this.argument = args; return this }
-      ok_some_(f) { this.callback[0][0] = f; return this }
-      ok_none_(f) { this.callback[0][1] = f; return this }
-      error_some_(f) { this.callback[1][0] = f; return this }
-      error_none_(f) { this.callback[1][1] = f; return this }
-      error_(f) { this.callback[1][0] = f; this.callback[1][1] = f; return this }
-      constructor(f) { this.callback[0][0] = f }
+      isAwait = false
+      await() { this.isAwait = true; return this }
+      onOk(f) { this.callback[0][0] = f; this.callback[0][1] = f; return this }
+      onErr(f) { this.callback[1][0] = f; this.callback[1][1] = f; return this }
+      onSome(f) { this.callback[0][0] = f; this.callback[1][0] = f; return this }
+      onNone(f) { this.callback[0][1] = f; this.callback[1][1] = f; return this }
+      onOkSome(f) { this.callback[0][0] = f; return this }
+      onOkNone(f) { this.callback[0][1] = f; return this }
+      onErrSome(f) { this.callback[1][0] = f; return this }
+      onErrNone(f) { this.callback[1][1] = f; return this }
+      constructor(onOkSome) { this.callback[0][0] = f }
    }
    const pipe = (f) => new Pipe(f)
+   pipe.awaitPipe = { isAwait: true }
    return pipe
 }()
 
-export const executePipeline = (pipeline, data, isError, ctx) => {
-   let isAsync = false, index = 0, callback = null
+export const execPipeline = (pipeline, data, isError, ctx) => {
+   let callback = null
    isError = !!isError
-   for (index = 0; index < pipeline.length; index++) {
+   for (let index = 0; index < pipeline.length; index++) {
       const pipe = pipeline[index]
       try {
-         if (Typu.isPromise(data)) {
-            isAsync = true
-            break
+         if (pipe.isAwait) {
+            return execAsyncLine(pipeline, data, isError, ctx, index + 1)
          }
          if (callback = pipe.callback[+isError][+Typu.isNone(data)]) {
             data = callback.call(ctx, data, pipe.argument, ctx)
@@ -35,18 +39,15 @@ export const executePipeline = (pipeline, data, isError, ctx) => {
          data = error ?? Error('Unknown error')
       }
    }
-   if (isAsync) {
-      return execAsyncLine(pipeline, data, ctx, index, isError)
-   }
-   return { value: data, isError }
+   return { value: data, isErr: isError }
 }
 
-const execAsyncLine = async (pipeline, data, ctx, start, isError) => {
+const execAsyncLine = async (pipeline, data, isError, ctx, start) => {
    let callback = null
-   for (let i = start; i < pipeline.length; ++i) {
-      const pipe = pipeline[i]
+   for (let index = start; index < pipeline.length; ++index) {
+      const pipe = pipeline[index]
       try {
-         if (data instanceof Promise) {
+         if (Typu.isPromise(data)) {
             data = await data
          }
          if (callback = pipe.callback[+isError][+Typu.isNone(data)]) {
@@ -58,5 +59,12 @@ const execAsyncLine = async (pipeline, data, ctx, start, isError) => {
          data = error ?? Error('Unknown error')
       }
    }
-   return { value: data, isError }
+   try {
+      if (Typu.isPromise(data)) {
+         data = await data
+      }
+      return { value: data, isErr: isError }
+   } catch (error) {
+      return { value: error ?? Error('Unknown error'), isErr: true }
+   }
 }
