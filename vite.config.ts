@@ -6,7 +6,7 @@ export default defineConfig((e) => {
    const mode = e.mode
 
    const lib = mode === 'production' ? {
-      entry: resolve('./src/lib/index.ts'),
+      entry: resolve('./src/index.ts'),
       formats: ['es', 'cjs', 'iife'],
       name: "funio"
    } : undefined
@@ -26,7 +26,7 @@ export default defineConfig((e) => {
          emptyOutDir: true
       },
       test: {
-         include: ['./src/**/*.test.ts'],
+         include: ['./src/**/*.test.ts', './src/**/*.test.js'],
       }
    } as UserConfig
 })

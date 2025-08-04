@@ -1,7 +1,6 @@
-import { KeyType } from '@/types'
+import { PropKey } from '@/types'
 
 export * from './builder'
-export * from './range'
 
 export function reverse(object: any) {
    const tmp = {}
@@ -21,7 +20,7 @@ export function reverse(object: any) {
    return tmp
 }
 
-export const zip = <K extends KeyType, V>(keyList: Iterable<K>, valueList: Iterable<V>) => {
+export const zip = <K extends PropKey, V>(keyList: Iterable<K>, valueList: Iterable<V>) => {
    const tmp: Record<K, V> = {} as any
    const it = valueList[Symbol.iterator]()
    for (const key of keyList) {

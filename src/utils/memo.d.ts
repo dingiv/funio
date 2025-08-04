@@ -1,4 +1,4 @@
-import { Primitive, ToPrimitive, UF, NF, } from "./types"
+import { Primitive, ToPrimitive, UF, NF, } from "@/types"
 
 /**
  * 托管一个state，监听其生命周期

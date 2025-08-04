@@ -1,5 +1,6 @@
-import { KeyType } from "@/types"
-import { dynamicBuilder } from "@/utils"
+import { Injector } from "./core"
+import { Diqo } from "./diqo"
+
 
 export interface Logger {
    debug(data: any[]): void
@@ -8,12 +9,53 @@ export interface Logger {
    error(data: any[]): void
 }
 
-export interface FunioGenInjectorConfig {
-   logger: Logger
+export interface FunioSubInjector extends Injector {
+   priority: number
+   primitiveInjector: Injector,
+   objectInjector: Injector,
+   functionInjector: Injector
 }
 
-export const FunioGenInjector = (config: Partial<FunioGenInjectorConfig>) => {
+export interface FunioInjectorConfig {
+   logger: Logger
+   injectors: FunioSubInjector[]
+   prefetch: Diqo[]
+   
+}
 
+const doInject = (config: FunioInjectorConfig, diqo: any) => {
+
+   for (let i = 0; i < config.injectors.length; i++) {
+
+   }
+
+}
+
+export const validateConfig = (config: Partial<FunioInjectorConfig>) => {
+
+   return {
+
+   } as FunioInjectorConfig
+}
+
+export const createFunioInjector = (config: Partial<FunioInjectorConfig>) => {
+   const cfg = validateConfig(config)
+   const ij = async (diqo: any) => {
+      diqo = await diqo
+      if (diqo == null) {
+         throw Error('cannot inject value for diqo: null or undefined')
+      }
+      switch (typeof diqo) {
+         case 'object':
+         case 'function':
+      }
+
+      return 0
+   }
+
+   ij.priority = 0
+
+   return ij
 }
 
 export const WebInjector = () => {
@@ -31,18 +73,10 @@ export const NodejsInjector = () => {
 
 }
 
+export const CtxInjector = () => {
 
-export interface InjectionQueryObject extends ReturnType<typeof InjectionQueryObject> { }
-export const InjectionQueryObject = (key: KeyType) => {
-   const ie = new InjectionQueryObjectClass(key)
-
-   return ie
 }
 
-class InjectionQueryObjectClass {
-   [s: KeyType]: any
-   constructor(key: KeyType) {
-      this.name = key
-   }
+export const WorkerInjector = () => {
+
 }
-export const ieb = dynamicBuilder(InjectionQueryObjectClass)

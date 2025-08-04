@@ -1,7 +1,13 @@
 const {
    Component,
    Inject,
+   Main
 } = createIoc()
+
+function log(target, ctx) {
+
+   return {}
+}
 
 @Component('human')
 class Human {
@@ -9,11 +15,23 @@ class Human {
    age = 18
 }
 
-@Component('son')
+@Component('father')
 class User {
    @Inject('human') son
 
    getName() {
       return this.son.name
    }
+}
+
+@Main('main')
+class App {
+   main() {
+
+   }
+}
+
+@log 
+class Demo {
+
 }
