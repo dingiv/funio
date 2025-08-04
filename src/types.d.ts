@@ -19,11 +19,6 @@ export type TypeofResult =
    | "object"
    | "function"
 
-export type Some<T = unknown> = NonNullable<T>
-export type None = null | undefined
-export type Option<T> = Some<T> | None
-export type Either<L, R> = L | R
-export type Awaity<T> = T | Promise<T>
 
 // unarity function
 export type UF<A = any, B = any> = (arg: A) => B
@@ -36,10 +31,3 @@ export type NF<A extends any[] = any[], R = any> = (...args: A) => R
 
 // predicate function
 export type Predicate<T> = UF<T, boolean>
-
-// assertion error
-export type FunioAssertionError = {
-   message: string
-   name: string
-   stack?: string
-}

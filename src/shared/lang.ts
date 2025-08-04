@@ -9,8 +9,9 @@ export const Lang = Object.freeze({
    equals(v1: any, v2: any) { return v1 === v2 },
    like(v1: any, v2: any) { return v1 == v2 },
    same(v1: any, v2: any) { if (isNaN(v1) && isNaN(v2)) return true; return v1 === v2 },
-   identity<T = any>(x: T) { return x },
-   as<T = any>(x: any) { return x as T },
    new<A extends any[], B>(cons: ConstructorType<A, B>, ...args: A) { return new cons(...args) },
-   throw(e: any) { throw e },
+   id<T = any>(x: T) { return x },
+   as<T = any>(x: any) { return x as T },
+   throw(e: any): unknown { throw e },
+   void(v: any) { return void v },
 })

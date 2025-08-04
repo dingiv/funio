@@ -1,13 +1,23 @@
-import { Awaity } from "@/types";
-import { Result } from "./unpack";
+import { Awaity, Either } from "./functor";
+import { Product } from "./pipe";
 
 export const Pipe: PipeFactory
 export const execPipeline: <T, R, CTX>(
-   pipeline: Pipe[], argv: T, isErr: boolean, ctx?: CTX
-) => Awaity<Result<T, R>>
+   pipeline: Pipe[], product: Awaity<Product<T, R>>, ctx?: CTX
+) => Either<T, R>
+
+export const execAsyncPipeline: <T, R, CTX>(
+   pipeline: Pipe[], product: Awaity<Product<T, R>>, ctx?: CTX
+) => Promise<Either<T, R>>
+
+export interface PipeConfig extends Record<string, any> {
+
+}
 
 export interface PipeProcessor<T, R> {
-   (input: T, arg: any, thisArg?: any): R;
+   (p: Either<T, R>): Either<T, R>;
+   ctx: any
+   cfg: PipeConfig
 }
 
 export interface Pipe {

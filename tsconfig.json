@@ -5,6 +5,8 @@
       "outDir": "./dist",
       "target": "ESNext",
       "module": "ESNext",
+      "experimentalDecorators": true,
+      "useDefineForClassFields": true,
       "moduleResolution": "Bundler",
       "esModuleInterop": true,
       "forceConsistentCasingInFileNames": true,

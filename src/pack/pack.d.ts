@@ -1,11 +1,15 @@
-import { Awaity, BF, None, Option, OUF, Some, UF } from "@/types"
-import { Pipe } from "./pipeline"
-import { Unpack } from "./unpack"
+import { BF, OUF, UF } from "@/types"
+import { Pipe } from "./pipe"
+import { Awaity, Either } from "./functor"
 
 export const Pack: PackFactory
 
-export interface Pack<Arg> {
-   get argv(): Arg
+export interface PackFactory {
+   <A = any>(value?: A): SyncPack<A, A>
+}
+
+export interface Pack<Val> {
+   get value(): Val | Promise<Val>
 
    get isSome(): boolean
    get isNone(): boolean
@@ -24,122 +28,118 @@ export interface Pack<Arg> {
    isStatus(statusCode: number): boolean
 }
 
-export interface PackFactory {
-   <A = any>(value?: A): SyncPack<A, A>
-}
-
-export interface SyncPack<Arg, Val, Err = unknown> extends Pack<Arg> {
-   get value(): Unpack<Val, Err>
+export interface SyncPack<Val, Ok, Err = unknown> extends Pack<Val> {
+   get value(): Val
+   map<T>(mapper: UF<Ok, T>): SyncPack<Val, T, Err>
+   get result(): Either<Ok, Err>
    get unwrap(): unknown
-   run(arg?: Arg, ctx?: any): SyncPack<Val, Val, Err>
-   get func(): OUF<Arg, Unpack<Val, Err>>
+   run(argv?: Val, ctx?: any): SyncPack<Ok, Ok, Err>
+
+   get func(): OUF<Val, Either<Ok, Err>>
+   get vague(): OUF<Val, unknown>
+   get total(): OUF<Val, number>
 
    /**
     * Type utils for pack instance.
     */
-   wrap<T>(arg: T): SyncPack<T, Val, Err>
-   wrapErr<T>(arg: T): SyncPack<T, Val, Err>
-   as<T>(value?: T): SyncPack<Arg, T, Err>
-   errAs<T>(err?: T): SyncPack<Arg, Val, T>
-
-   /**
-    * Map the value in the pack-pipeline.
-    */
-   map<T>(mapper: UF<Some<Val>, T>): SyncPack<Arg, T, Err>
-   mapErr<T = Err>(mapper: UF<Option<Err>, T>): SyncPack<Arg, Val, T>
+   ok<T>(arg: T): SyncPack<T, Ok, Err>
+   err<T>(arg: T): SyncPack<T, Ok, Err>
+   as<T>(value?: T): SyncPack<Val, T, Err>
+   asErr<T>(err?: T): SyncPack<Val, Ok, T>
+   mapErr<T = Err>(mapper: UF<Err, T>): SyncPack<Val, Ok, T>
 
    /**
     * Status transformation helpers of the pack-pipeline.
    */
-   maybe(mapper: Val | UF<None, Val>): SyncPack<Arg, Val, Err>
-   catch(catcher: Val | UF<None, Val>): SyncPack<Arg, Val, Err>
-   default(defaultValue: Val): SyncPack<Arg, Val, Err>
-   assert<T = unknown>(predicate: UF<Arg, boolean>, err?: T): SyncPack<Arg, Val, T>
+   maybe(mapper: Ok | UF<undefined | null, Ok>): SyncPack<Val, Ok, Err>
+   catch<T, E = unknown>(catcher: UF<Err, T>): SyncPack<Val, Awaited<T>, Awaited<E>>
+   catch<T, E = unknown>(catcher: T): SyncPack<Val, Awaited<T>, Awaited<E>>
+   default<T = unknown>(defaultValue: Ok): SyncPack<Val, Ok, T>
+   assert<T = unknown>(predicate: UF<Val, boolean>, err?: T): SyncPack<Val, Ok, T>
    // expect. 左右括号 .end
-   throw<T = unknown>(err: T): SyncPack<Arg, Val, T>
+   throw<T = unknown>(err: T): SyncPack<Val, Ok, T>
 
    /**
     * Advanced method to append pipeline.
     */
-   pre<T>(p: UF<T, Arg>): SyncPack<T, Val, Err>
-   pipe(p: Pipe): SyncPack<Arg, Val, Err>
-   chain<Arg2, Val2, Err2 = unknown>(pack2: SyncPack<Arg2, Val2, Err2>): SyncPack<Arg2, Awaited<Val2>, Err2>
+   pre<T>(p: UF<T, Val>): SyncPack<T, Ok, Err>
+   pipe(p: Pipe): SyncPack<Val, Ok, Err>
+   chain<Arg2, Val2, Err2 = unknown>(pack2: SyncPack<Arg2, Val2, Err2>): SyncPack<Arg2, Val2, Err2>
 
    /**
     * Promise-like interface.
     */
+   get await(): AsyncPack<Awaited<Val>, Awaited<Ok>, Awaited<Err>>
    then<TResult1, TResult2 = never>(
-      onfulfilled?: UF<Some<Val>, TResult1>,
+      onfulfilled?: UF<NonNullable<Ok>, TResult1>,
       onrejected?: UF<Err, TResult2>
-   ): Pack<Arg, Awaited<TResult1>, Awaited<TResult2>>
-   finally(onfinally?: () => void): Pack<Arg, Awaited<Val>, Err>
+   ): SyncPack<TResult1, TResult1, TResult2>
+   finally(onfinally?: () => void): SyncPack<Val, Ok, Err>
 
    /**
-    * Stateful interface.
+    * Stateful interface. 
     */
-   wrap<Arg2, Val2, Err2 = unknown>(wrapper: BF<Arg2, Pack<Arg, Val, Err>, Val2>): Pack<Arg2, Awaited<Val2>, Err2>
+   ring<Arg2, Val2, Err2 = unknown>(wrapper: BF<Arg2, SyncPack<Val, Ok, Err>, Val2>): SyncPack<Arg2, Awaited<Val2>, Err2>
+   hook(): void
+   gen<T>(gf: UF<Ok, Generator<any, T, any>>): SyncPack<Val, Awaited<T>, Err>
+
+   /**
+    * utils
+    */
+   match: void
+
 }
 
-export interface AsyncPack<Arg, Val, Err = unknown> extends Pack<Arg, Val, Err> {
-   run(arg?: Arg, ctx?: any): AsyncPack<Val, Val, Err>
-   get value(): Awaity<Unpack<Val, Err>>
-   get unwrap(): unknown
-   get func(): OUF<Arg, Awaity<Unpack<Val, Err>>>
+
+export interface AsyncPack<Val, Ok, Err = unknown> extends Pack<Val> {
+   map<T>(mapper: UF<Ok, T>): AsyncPack<Val, Awaited<T>, Err>
+   get value(): Promise<Val>
+   get result(): Promise<Either<Ok, Err>>
+   get unwrap(): Promise<unknown>
+   run(argv?: Val, ctx?: any): AsyncPack<Ok, Ok, Err>
+
+   get func(): OUF<Val, Promise<Either<Ok, Err>>>
+   get vague(): OUF<Val, Promise<unknown>>
+   get total(): OUF<Val, Promise<number>>
 
    /**
     * Type utils for pack instance.
     */
-   wrap<T>(arg: T): Pack<T, Val, Err>
-   wrapErr<T>(arg: T): Pack<T, Val, Err>
-   as<T>(value?: T): Pack<Arg, T, Err>
-   errAs<T>(err?: T): Pack<Arg, Awaited<Val>, T>
-
-   /**
-    * Get the status of the pack.
-    */
-   get status(): number
-   isStatus(statusCode: number): boolean
-   get isSome(): boolean
-   get isNone(): boolean
-   get isOk(): boolean
-   get isError(): boolean
-   get isAsync(): boolean
-   get isSync(): boolean
-
-   /**
-    * Map the value in the pack-pipeline.
-    */
-   map<T>(mapper: UF<Some<Val>, T>): Pack<Arg, Awaited<T>, Err>
-   mapErr<T = Err>(mapper: UF<Some<Err>, T>): Pack<Arg, Awaited<Val>, T>
+   ok<T>(arg: T): AsyncPack<Awaited<T>, Ok, Err>
+   err<T>(arg: T): AsyncPack<Awaited<T>, Ok, Err>
+   as<T>(value?: T): AsyncPack<Val, Awaited<T>, Err>
+   asErr<T>(err?: T): AsyncPack<Val, Ok, Awaited<T>>
+   mapErr<T = Err>(mapper: UF<Err, T>): AsyncPack<Val, Ok, Awaited<T>>
 
    /**
     * Status transformation helpers of the pack-pipeline.
    */
-   maybe(mapper: UF<None, Val> | Val): Pack<Arg, Awaited<Val>, Err>
-   catch(catcher: UF<Err, Val> | Val): Pack<Arg, Awaited<Val>, Err>
-   default(defaultValue: Val): Pack<Arg, Awaited<Val>, Err>
-   assert(predicate: UF<Arg, boolean>, error?: string): Pack<Arg, Awaited<Val>, Err>
-   throw<T>(err: T): Pack<Arg, Awaited<Val>, T>
-
+   maybe(mapper: Ok | UF<undefined | null, Ok>): AsyncPack<Val, Ok, Err>
+   catch<T, E = unknown>(catcher: T): SyncPack<Val, Awaited<T>, Awaited<E>>
+   catch<T, E = unknown>(catcher: UF<Err, T>): SyncPack<Val, Awaited<T>, Awaited<E>>
+   default<T = unknown>(defaultValue: Ok): AsyncPack<Val, Ok, Awaited<T>>
+   assert<T = unknown>(predicate: UF<Val, boolean>, err?: T): AsyncPack<Val, Ok, Awaited<T>>
+   // expect. 左右括号 .end
+   throw<T = unknown>(err: T): AsyncPack<Val, Ok, Awaited<T>>
 
    /**
     * Advanced method to append pipeline.
     */
-   pre<T>(p: UF<T, Arg>): Pack<T, Val, Err>
-   pipe(p: Pipe): Pack<Arg, Val, Err>
-   chain<Arg2, Val2, Err2 = unknown>(pack2: Pack<Arg2, Val2, Err2>): Pack<Arg2, Awaited<Val2>, Err2>
+   pre<T>(p: UF<T, Val>): AsyncPack<T, Ok, Err>
+   pipe(p: Pipe): AsyncPack<Val, Ok, Err>
+   chain<Arg2, Val2, Err2 = unknown>(pack2: AsyncPack<Arg2, Val2, Err2>): AsyncPack<Arg2, Val2, Err2>
 
    /**
     * Promise-like interface.
     */
    then<TResult1, TResult2 = never>(
-      onfulfilled?: UF<Some<Val>, TResult1>,
+      onfulfilled?: UF<NonNullable<Ok>, TResult1>,
       onrejected?: UF<Err, TResult2>
-   ): Pack<Arg, Awaited<TResult1>, Awaited<TResult2>>
-   finally(onfinally?: () => void): Pack<Arg, Awaited<Val>, Err>
+   ): AsyncPack<Val, TResult1, TResult2>
+   finally(onfinally?: () => void): AsyncPack<Val, Ok, Err>
 
    /**
-    * Stateful interface.
+    * Stateful interface. 
     */
-   wrap<Arg2, Val2, Err2 = unknown>(wrapper: BF<Arg2, Pack<Arg, Val, Err>, Val2>): Pack<Arg2, Awaited<Val2>, Err2>
+   wrap<Arg2, Val2, Err2 = unknown>(wrapper: BF<Arg2, AsyncPack<Val, Ok, Err>, Val2>): AsyncPack<Arg2, Awaited<Val2>, Err2>
 }
