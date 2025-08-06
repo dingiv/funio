@@ -126,13 +126,49 @@ test('test Generator interface', async () => {
    const pack = Pack(1)
       .map(String)
       .gen(function* (data) {
+         console.log(data)
          const a: number = yield 1
          const b = yield 2
          console.log(a, b)
          return 2
+      }, (diqo: any) => {
+         if (diqo === 1) {
+            return 100
+         }
+         return 200
       })
-      .map((x) => parseInt(x))
+      .map((x) => x + 1)
       .map((x) => x * 2)
+
+   console.log(await pack)
+
+})
+
+test('test State interface', async () => {
+   const pack = Pack(1)
+      .map((x, s, c) => {
+         console.log('s', s)
+
+         console.log('c', c)
+
+         let a: any
+         a.ddd
+
+         if (x > 1) {
+            return x
+         }
+         s.count++
+
+         return x + 1
+      })
+
+
+
+   console.log(pack)
+
+   console.log(pack.run(2, { count: 1 }, { helper: 1 }))
+
+   console.log((await pack.run(2, { count: 1 }, { helper: 1 }).await.throw('hello').map(x => x + 1).result))
 
 
 

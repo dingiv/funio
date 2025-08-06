@@ -9,7 +9,7 @@ const PipeImpl = class Pipe {
       return p
    }
 
-   process(product, ctx) {
+   process(product, state, ctx) {
       return product
    }
 
@@ -18,61 +18,61 @@ const PipeImpl = class Pipe {
    }
 }
 
-export const Pipe =function() {
-   const p =  PipeImpl.of
+export const Pipe = function () {
+   const p = PipeImpl.of
    p.awaitPipe = PipeImpl.of(Lang.id)
    p.awaitPipe.isAwait = true
    return p
 }()
 
 
-export const onSomeOk = function (product, ctx) {
+export const onSomeOk = function (product, state, ctx) {
    if (product.value != null && !product.eflag) {
       return {
-         value: this.callback.call(undefined, product.value, ctx, this),
+         value: this.callback.call(undefined, product.value, state, ctx, this),
       }
    }
    return product
 }
 
-export const onSomeNone = function (product, ctx) {
+export const onSomeNone = function (product, state, ctx) {
    if (product.value == null && !product.eflag) {
       return {
-         value: this.callback.call(undefined, product.value, ctx, this),
+         value: this.callback.call(undefined, product.value, state, ctx, this),
       }
    }
    return product
 }
 
-export const onOk = function (product, ctx) {
+export const onOk = function (product, state, ctx) {
    if (product.eflag) {
       return product
    }
    return {
-      value: this.callback.call(undefined, product.value, ctx, this),
+      value: this.callback.call(undefined, product.value, state, ctx, this),
    }
 }
 
-export const onErr = function (product, ctx) {
+export const onErr = function (product, state, ctx) {
    if (!product.eflag) {
       return product
    }
    return {
-      value: this.callback.call(undefined, product.value, ctx, this),
+      value: this.callback.call(undefined, product.value, state, ctx, this),
    }
 }
 
-export const onDefault = function (product, ctx) {
+export const onDefault = function (product, state, ctx) {
    if (product.eflag || product.value == null) {
       return {
-         value: this.callback.call(undefined, product.value, ctx, this),
+         value: this.callback.call(undefined, product.value, state, ctx, this),
       }
    }
    return product
 }
 
-export const onAll = function (product, ctx) {
+export const onAll = function (product, state, ctx) {
    return {
-      value: this.callback.call(undefined, product.value, ctx, this),
+      value: this.callback.call(undefined, product.value, state, ctx, this),
    }
 }

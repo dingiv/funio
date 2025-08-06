@@ -1,4 +1,4 @@
-import { BF, OUF, UF } from "@/types"
+import { BF, NF, OUF, PlainRecord, UF } from "@/types"
 import { Pipe } from "./pipe"
 import { Awaity, Either } from "./functor"
 
@@ -26,14 +26,17 @@ export interface Pack<Val> {
     */
    get status(): number
    isStatus(statusCode: number): boolean
+
+   get state(): PlainRecord<any>
+   get context(): PlainRecord<any>
 }
 
-export interface SyncPack<Val, Ok, Err = unknown> extends Pack<Val> {
+export interface SyncPack<Val, Ok, Err = unknown, State = PlainRecord<any>, Ctx = PlainRecord<any>> extends Pack<Val> {
    get value(): Val
-   map<T>(mapper: UF<Ok, T>): SyncPack<Val, T, Err>
+   map<T>(mapper: NF<[Ok, State, Ctx], T>): SyncPack<Val, T, Err>
    get result(): Either<Ok, Err>
    get unwrap(): unknown
-   run(argv?: Val, ctx?: any): SyncPack<Ok, Ok, Err>
+   run(argv?: Val, state?: PlainRecord<any>, ctx?: PlainRecord<any>): SyncPack<Ok, Ok, Err>
 
    get func(): OUF<Val, Either<Ok, Err>>
    get vague(): OUF<Val, unknown>
@@ -80,16 +83,22 @@ export interface SyncPack<Val, Ok, Err = unknown> extends Pack<Val> {
     * Stateful interface. 
     */
    ring<Arg2, Val2, Err2 = unknown>(wrapper: BF<Arg2, SyncPack<Val, Ok, Err>, Val2>): SyncPack<Arg2, Awaited<Val2>, Err2>
-   hook(): void
-   gen<T>(gf: UF<Ok, Generator<any, T, any>>): SyncPack<Val, Awaited<T>, Err>
+   hook<T>(hk: BF<Ok, Record<string, Function>, T>): void
+   gen<T>(gf: UF<Ok, Generator<any, T, any>>, injector: UF<any, any>): SyncPack<Val, Awaited<T>, Err>
 
    /**
     * utils
     */
    match: void
+   pattern: void
 
+   iter: void
+   forof: void
+   forin: void
+   for: void
+
+   builder: void
 }
-
 
 export interface AsyncPack<Val, Ok, Err = unknown> extends Pack<Val> {
    map<T>(mapper: UF<Ok, T>): AsyncPack<Val, Awaited<T>, Err>

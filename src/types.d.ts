@@ -5,9 +5,9 @@
 export type Primitive = boolean | number | bigint | string | symbol | undefined | null
 export type Simple = boolean | number | bigint | string | symbol
 export type ToPrimitive<T> = T extends object ? never : T
-export type PropKey = string | number | symbol
 export type KeyOf<T> = keyof T
 export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
+export type PlainRecord<T> = Record<PropertyKey, T>
 
 export type TypeofResult =
    | "undefined"

@@ -9,9 +9,11 @@ import { onSomeNone, onDefault, onAll } from "./pipe"
 const INNER = Symbol('pack_awaity_either')
 const PIPELINE = Symbol('pack_pipeline')
 const CONTEXT = Symbol('pack_context')
+const STATE = Symbol('pack_state')
 
 const BasePack = class Pack {
-   [INNER] = null /* : Awaity<Either<Val, Err>> */
+   [INNER] = null; /* : Awaity<Either<Val, Err>> */
+   [STATE] = null;
    get value() { return Awaity.map(this[INNER], (x) => x.value) }
    get pipeline() { return this[PIPELINE] }
    get isOk() { return Awaity.map(this[INNER], (x) => !x.eflag) }
@@ -67,20 +69,24 @@ const BasePack = class Pack {
    }
    get func() {
       const pack = this
-      return function (local, ctx) {
+      function self(local, ctx) {
          const value = local ?? pack[INNER].value
-         const result = pack.exec(pack.pipeline, { value }, ctx ?? pack[CONTEXT])
+         const result = pack.exec(pack.pipeline, { value }, self.state, ctx ?? pack[CONTEXT])
          return Either.from(result)
       }
+      self.state = {}
+      return self
    }
 
    get vague() {
       const pack = this
-      return function (local, ctx) {
+      function self(local, ctx) {
          const value = local ?? pack[INNER].value
-         const result = pack.exec(pack.pipeline, { value }, ctx ?? pack[CONTEXT])
+         const result = pack.exec(pack.pipeline, { value }, self.state, ctx ?? pack[CONTEXT])
          return result.value
       }
+      self.state = {}
+      return self
    }
 
    get total() { return this.vague }
@@ -129,7 +135,8 @@ const BasePack = class Pack {
             return { value: res(product.value) }
          }
       }))
-      const result = this.exec(pipeline, this[INNER], this)
+      if (!this[STATE]) { this[STATE] = {} }
+      const result = this.exec(pipeline, this[INNER], this[STATE], this[CONTEXT])
       return this.new(result, [])
    }
 
@@ -144,10 +151,10 @@ const BasePack = class Pack {
       return this.new({ value: undefined }, [p])
    }
 
-   gen(g) {
+   gen(g, j) {
       const p = Pipe(function (product, ctx) {
          if (!product.eflag) {
-            return { value: feed(g, ctx.genjector), eflag: false }
+            return { value: feed(g(product.value), j ?? ctx.genjector), eflag: false }
          }
          return product
       })
@@ -158,10 +165,11 @@ const BasePack = class Pack {
 
    }
 
-   hook() {
+   state(hf) {
+      const p = Pipe(function (product, ctx) {
 
+      })
    }
-
 }
 
 const SyncPack = class Pack extends BasePack {
@@ -179,8 +187,8 @@ const SyncPack = class Pack extends BasePack {
       return p
    }
 
-   exec(pipeline, product, ctx) {
-      return execSyncPipeline(pipeline, product, ctx)
+   exec(pipeline, product, state, ctx) {
+      return execSyncPipeline(pipeline, product, state, ctx)
    }
 
    get await() {
@@ -219,12 +227,12 @@ const AsyncPack = class Pack extends BasePack {
       return p
    }
 
-   exec(pipeline, product, ctx) {
-      return execAsyncPipeline(pipeline, product, ctx)
+   exec(pipeline, product, state, ctx) {
+      return execAsyncPipeline(pipeline, product, state, ctx)
    }
 
    get result() {
-      return this.exec(this.pipeline, this[INNER], this[CONTEXT]).then(Either.from)
+      return this.exec(this.pipeline, this[INNER], this[STATE], this[CONTEXT]).then(Either.from)
    }
 
    get unwrap() {
@@ -233,20 +241,24 @@ const AsyncPack = class Pack extends BasePack {
 
    get func() {
       const pack = this
-      return async function (local, ctx) {
+      async function self(local, ctx) {
          const value = local ?? pack[INNER].value
-         const result = await pack.exec(pack.pipeline, { value }, ctx ?? pack[CONTEXT])
+         const result = await pack.exec(pack.pipeline, { value }, self.state, ctx ?? pack[CONTEXT])
          return Either.from(result)
       }
+      self.state = {}
+      return self
    }
 
    get vague() {
       const pack = this
-      return async function (local, ctx) {
+      async function self(local, ctx) {
          const value = local ?? pack[INNER].value
-         const result = await pack.exec(pack.pipeline, { value }, ctx ?? pack[CONTEXT])
+         const result = await pack.exec(pack.pipeline, { value }, self.state, ctx ?? pack[CONTEXT])
          return result.value
       }
+      self.state = {}
+      return self
    }
 }
 
