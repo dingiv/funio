@@ -22,7 +22,7 @@ export interface Some<T extends NonNullable<unknown>> extends Option<T> {
 }
 
 export interface None extends Option<undefined | null> {
-   get value(): undefined | null
+   get value(): undefined
 }
 export const None: None
 

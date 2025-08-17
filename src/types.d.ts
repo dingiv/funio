@@ -4,7 +4,29 @@
  */
 export type Primitive = boolean | number | bigint | string | symbol | undefined | null
 export type Simple = boolean | number | bigint | string | symbol
-export type ToPrimitive<T> = T extends object ? never : T
+export type ToPrimitive<T> = T extends object
+   ? never : (
+      T extends boolean
+      ? boolean : (
+         T extends number
+         ? number : (
+            T extends bigint
+            ? bigint : (
+               T extends string
+               ? string : (
+                  T extends symbol
+                  ? symbol : (
+                     T extends undefined
+                     ? undefined : (
+                        T extends null
+                        ? null : never
+                     )
+                  )
+               )
+            )
+         )
+      )
+   )
 export type KeyOf<T> = keyof T
 export type ConstructorType<A extends any[] = any[], B extends any = any> = new (...args: A) => B
 export type PlainRecord<T> = Record<PropertyKey, T>

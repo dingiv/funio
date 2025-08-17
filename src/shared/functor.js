@@ -10,6 +10,10 @@ const SomeImpl = class Some {
       return tmp
    }
 
+   get value() {
+      return this[VALUE]
+   }
+
    get isSome() {
       return true
    }
@@ -21,9 +25,9 @@ const SomeImpl = class Some {
 
 export const Some = SomeImpl.of
 
-export const None = {
+export const None = Object.freeze({
    get value() {
-      return null
+      return undefined
    },
    get isNone() {
       return true
@@ -31,7 +35,7 @@ export const None = {
    get isSome() {
       return false
    }
-}
+})
 
 const OptionImpl = class Option {
    static of(value) {

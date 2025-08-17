@@ -2,8 +2,7 @@ import { onErr } from "./pipe"
 import { onSomeOk } from "./pipe"
 import { execSyncPipeline, execAsyncPipeline } from "./pipeline"
 import { Pipe } from "./pipe"
-import { Lang, Typu } from "@/shared"
-import { Awaity, Either } from "./functor"
+import { Lang, Typu, Awaity, Either } from "@/shared"
 import { onSomeNone, onDefault, onAll } from "./pipe"
 
 const INNER = Symbol('pack_awaity_either')
@@ -34,11 +33,21 @@ const BasePack = class Pack {
    }
 
    ok(arg) {
-      /* TODO: 考虑 arg 为 Promise */
-      return this.new({ value: arg, eflag: false }, this.pipeline.slice())
+      if (Typu.isPromise(arg)) {
+         return this.new(arg.then(
+            (x) => ({ value: x }),
+            (x) => ({ value: x, eflag: true })
+         ), this.pipeline.slice())
+      }
+      return this.new({ value: arg }, this.pipeline.slice())
    }
    err(err) {
-      /* 同上 */
+      if (Typu.isPromise(err)) {
+         return this.new(err.then(
+            (x) => ({ value: x, eflag: true }),
+            (x) => ({ value: x, eflag: true })
+         ), this.pipeline.slice())
+      }
       return this.new({ value: err, eflag: true }, this.pipeline.slice())
    }
 
@@ -54,7 +63,7 @@ const BasePack = class Pack {
       }))
    }
 
-   exec(pipeline, product, ctx) { Lang.throw('not implemented') }
+   exec(pipeline, product, state, ctx) { Lang.throw('not implemented') }
    get result() {
       return Either.from(this.exec(this.pipeline, this[INNER], this[CONTEXT]))
    }
@@ -62,9 +71,9 @@ const BasePack = class Pack {
       return this.result.value
    }
 
-   run(argv, ctx) {
+   run(argv, state, ctx) {
       const inner = argv ? { value: argv } : this[INNER]
-      const result = this.exec(this.pipeline, inner, ctx ?? this[CONTEXT])
+      const result = this.exec(this.pipeline, inner, state, ctx ?? this[CONTEXT])
       return this.new(result, [])
    }
    get func() {
@@ -122,7 +131,7 @@ const BasePack = class Pack {
    }
    throw(err) {
       const p = Pipe(function (product, ctx) {
-         return { value: err, eflag: true }
+         return { value: err ?? product.value, eflag: true }
       })
       return this.append(p)
    }
@@ -142,19 +151,20 @@ const BasePack = class Pack {
 
    ring(f) {
       const inner = this
-      const p = Pipe(function (product, ctx) {
+      const p = Pipe(function (product, state, ctx) {
          if (!product.eflag) {
-            return { value: f(product.value, inner), eflag: false }
+            return { value: f(product.value, state, inner), eflag: false }
          }
          return product
       })
       return this.new({ value: undefined }, [p])
    }
 
+   static GENJ = Symbol('pack_genjector')
    gen(g, j) {
-      const p = Pipe(function (product, ctx) {
+      const p = Pipe(function (product, state, ctx) {
          if (!product.eflag) {
-            return { value: feed(g(product.value), j ?? ctx.genjector), eflag: false }
+            return { value: feed(g(product.value), j ?? ctx[Pack.GENJ]), eflag: false }
          }
          return product
       })
@@ -165,10 +175,26 @@ const BasePack = class Pack {
 
    }
 
-   state(hf) {
-      const p = Pipe(function (product, ctx) {
-
+   static MEMO = Symbol('pack_memo')
+   memo(getKey = String) {
+      const old = this
+      const pipeline = old.pipeline
+      const p = Pipe(function (product, state, ctx) {
+         if (!product.eflag) {
+            let memo = state[Pack.MEMO]
+            if (!memo) {
+               state[Pack.MEMO] = memo = {}
+            }
+            const key = getKey(product.value)
+            let memoed = memo[key]
+            if (memoed) {
+               return memoed
+            }
+            return memo[key] = old.exec(pipeline, product, state, ctx)
+         }
+         return product
       })
+      return this.new(old[INNER], [p])
    }
 }
 
@@ -195,6 +221,7 @@ const SyncPack = class Pack extends BasePack {
       const p = AsyncPack.of(this[INNER], this[PIPELINE])
       return p.append(Pipe.awaitPipe)
    }
+
 
 
 }

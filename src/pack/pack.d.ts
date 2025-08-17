@@ -98,6 +98,13 @@ export interface SyncPack<Val, Ok, Err = unknown, State = PlainRecord<any>, Ctx 
    for: void
 
    builder: void
+
+   memo(getKey?: UF<Ok, PropertyKey>): SyncPack<Val, Ok, Err>
+   cache: void
+   singleton: void
+   debounce: void
+   throttle: void
+   lock: void /* 一个异步任务在没有完成时，无法再调用第二次 */
 }
 
 export interface AsyncPack<Val, Ok, Err = unknown> extends Pack<Val> {

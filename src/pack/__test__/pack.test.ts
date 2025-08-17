@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { Pack } from '@/pack'
-import { Lang } from "@/shared";
+import { Lang, Typu } from "@/shared";
 
 test('test basic capabilities', async () => {
    const pack = Pack(1).map(x => x * 2)
@@ -148,7 +148,6 @@ test('test State interface', async () => {
    const pack = Pack(1)
       .map((x, s, c) => {
          console.log('s', s)
-
          console.log('c', c)
 
          let a: any
@@ -161,15 +160,44 @@ test('test State interface', async () => {
 
          return x + 1
       })
+      
+   console.log(pack)
+   console.log(pack.run(2, { count: 1 }, { helper: 1 }))
+   console.log((await pack.run(2, { count: 1 }, { helper: 1 }).await.throw('hello').map(x => x + 1).result))
+})
 
 
+test('test Memo interface', async () => {
+   const pack = Pack(1).map((x) => {
+      return {
+         value: x + Math.random() * 1000
+      }
+   }).memo(x => x.value).map((x) => { console.log(x) })
 
    console.log(pack)
 
-   console.log(pack.run(2, { count: 1 }, { helper: 1 }))
+   const result = await pack
+   expect(await pack).toBe(result)
+   expect(await pack).toBe(result)
+   expect(await pack).toBe(result)
+})
 
-   console.log((await pack.run(2, { count: 1 }, { helper: 1 }).await.throw('hello').map(x => x + 1).result))
 
+test('test match interface', async () => {
+   // const pack = Pack(1).match(
+   //    Typu.tyfNumber, (x) => x + 1, 
+   //    /* 两两为组，支持 Pred 和 Picker，返回 true 则传入，data，返回 false、null、undefined 则匹配失败，如果 Pred 和 Picker 抛出异常，则匹配失败，其他值则匹配成功，并返回这个值 */
+   //    (x) => x.name, (name) => name + 'a',
+   //    Pred.struct({
+   //       name: Typu.tyfString,
+   //       age: Typu.isArray
+   //    }), () => {}
+   // )
 
-
+   // const pack2 = Pack(2)
+   //    .match.case(1, 2, (x) => x + 1)
+   //    .test(Typu.tyfNumber, (x) => x + 2)
+   //    .pick()
+   //    .otherwise((x) => x + 3)
+   //    .map((x) => x + 1)
 })

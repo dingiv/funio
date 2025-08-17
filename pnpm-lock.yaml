@@ -11,6 +11,9 @@ importers:
       '@types/node':
         specifier: ^20.19.9
         version: 20.19.9
+      match-iz:
+        specifier: ^5.0.7
+        version: 5.0.7
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -719,6 +722,10 @@ packages:
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
+
+  match-iz@5.0.7:
+    resolution: {integrity: sha512-1iNa7aRvkE+VtK4GTC0Dcd2wkd7K6UNtbjmi7OQ3mj8lG6bzxDWtOcEX/cGGsIFZLORkfzbVsWfcjd0zQhPwwg==}
+    engines: {node: '>=10'}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -1757,6 +1764,8 @@ snapshots:
   magic-string@0.30.17:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.4
+
+  match-iz@5.0.7: {}
 
   math-intrinsics@1.1.0:
     optional: true

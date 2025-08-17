@@ -1,5 +1,4 @@
-import { Either } from "./functor"
-import { Lang, Typu } from "@/shared"
+import { Lang, Typu, Either } from "@/shared"
 
 const PipeImpl = class Pipe {
    static of(process, callback) {
@@ -24,7 +23,6 @@ export const Pipe = function () {
    p.awaitPipe.isAwait = true
    return p
 }()
-
 
 export const onSomeOk = function (product, state, ctx) {
    if (product.value != null && !product.eflag) {

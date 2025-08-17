@@ -1,4 +1,4 @@
-import { Awaity, Either } from "./functor";
+import { Awaity, Either } from "@/shared";
 import { Product } from "./pipe";
 
 export const Pipe: PipeFactory
