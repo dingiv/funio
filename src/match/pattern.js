@@ -103,7 +103,7 @@ const Rule = Object.freeze({
    [R_PATTERN]: matchPattern,
 })
 
-const matchAny = (data, info) => {
+export const matchAny = (data, info) => {
    return Rule[info.type](data, info.args)
 }
 
@@ -111,7 +111,7 @@ const Info = (type, args) => {
    return { type, args }
 }
 
-const createAnyInfo = (src) => {
+export const createAnyInfo = (src) => {
    let info
    switch (typeof src) {
       case 'function':
@@ -148,6 +148,14 @@ const createArrayInfo = (array) => {
       info.push(createAnyInfo(array[i]))
    }
    return { type: R_ARRAY, args: info }
+}
+
+const createEnumInfo = (options) => {
+   const info = []
+   for (const option of options) {
+      info.push(createAnyInfo(option))
+   }
+   return { type: R_ENUM, args: info }
 }
 
 const PatternImpl = class Pattern {
@@ -205,20 +213,13 @@ const PatternImpl = class Pattern {
    }
 }
 
-const createEnumInfo = (options) => {
-   let info = []
-   for (const option of options) {
-      info.push(createAnyInfo(option))
-   }
-   return { type: R_ENUM, args: info }
-}
-
 export const Pattern = function () {
    const Pattern = (sugar, ...args) => PatternImpl.of(createAnyInfo(sugar), ...args)
 
    Pattern.enum = (...args) => PatternImpl.of(createEnumInfo(args))
    Pattern.struct = (obj) => PatternImpl.of(createObjectInfo(obj))
    Pattern.tuple = (iter) => PatternImpl.of(createArrayInfo(iter))
+   Pattern.isPattern = (maybe) => Reflect.has(maybe, PATTERN_INFO)
 
    return Pattern
 }()

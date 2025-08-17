@@ -1,80 +1,61 @@
+import { Pattern } from "./pattern"
 
-
-export const execMatch = function () {
-   function caller(data) {
-      if (data != null) {
-         caller[CALL_RES] = caller.f.call(undefined, data)
-      }
-   }
-   const CALL_RES = Symbol('match_call_result')
-   const CALL_FLAG = Symbol('match_call_flag')
-   return (data, patterns, callbacks) => {
-      for (let index = 0; index < patterns.length; ++index) {
-         try {
-            const p = patterns[index]
-            caller[CALL_RES] = CALL_FLAG
-            caller.f = callbacks[index]
-            p.match(data, caller)
-            switch (caller[CALL_RES]) {
-               case true:
-
-                  break;
-               case false:
-               case null:
-               case undefined:
-
-                  break;
-               default:
-                  break;
+export const match = (data) => {
+   return (...pairs) => {
+      for (let i = 0; i < pairs.length; i += 2) {
+         let pattern = pairs[i]
+         const callback = pairs[i + 1]
+         if (Pattern.isPattern(pattern)) {
+            const result = pattern.match(data)
+            if (result.isSome) {
+               return callback(result.value)
             }
-            if (caller[CALL_RES] !== CALL_FLAG) {
-
-               return caller[CALL_RES]
+         } else {
+            pattern = createAnyInfo(pattern)
+            const result = matchAny(data, pattern)
+            if (result !== FAIL) {
+               return callback(result)
             }
-         } catch {
-            continue
          }
       }
+      return undefined
    }
-}()
+}
+
+const execMatch = (data, patterns, callbacks) => {
+   for (let index = 0; index < patterns.length; ++index) {
+      const result = patterns[index].match(data)
+      if (result.isSome) {
+         return callbacks[index](result.value)
+      }
+   }
+   return undefined
+}
 
 const MatchImpl = class Match {
    data
    patterns = []
    callbacks = []
 
-   static of(data) {
+   static of(data, ...pairs) {
       const m = new Match
       m.data = data
+      for (let i = 0; i < pairs.length; i += 2) {
+         m.patterns.push(pairs[i])
+         m.callbacks.push(pairs[i + 1])
+      }
       return m
    }
 
-   case(cond, callback) {
-      this.patterns.push(function (data, cb) {
-         if (cond === data) {
-            cb(data)
-         }
-      })
-      this.callbacks.push(callback)
-      return this
-   }
-
-   test(tester, callback) {
-      this.patterns.push((data, cb) => {
-         if (tester(data)) {
-            cb(data)
-         }
-      })
-      this.callbacks.push(callback)
-      return this
-   }
-
    when(pattern, callback) {
-      this.patterns.push(pattern)
+      if (Pattern.isPattern(pattern)) {
+         this.patterns.push(pattern)
+      } else {
+         this.patterns.push(createAnyInfo(pattern))
+      }
       this.callbacks.push(callback)
       return this
    }
-
 
    get value() {
       return execMatch(this.data, this.patterns, this.callbacks)
@@ -94,11 +75,6 @@ const MatchImpl = class Match {
    equals() { }
    like() { }
    same() { }
-
-
 }
 
-export const Match = (data, arms) => {
-   return MatchImpl.of(data)
-}
-
+export const Match = (data, ...pairs) => MatchImpl.of(data, ...pairs)

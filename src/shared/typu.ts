@@ -19,7 +19,7 @@ export function isBoolean(value: any) { return typeof value === 'boolean' || val
 export function isNumber(value: any) { return typeof value === 'number' || value instanceof Number }
 export function isBigint(value: any) { return typeof value === 'bigint' || value instanceof BigInt }
 export function isString(value: any) { return typeof value === 'string' || value instanceof String }
-export function isSymbol(value: any) { return typeof value === 'symbol' }
+export function isSymbol(value: any) { return typeof value === 'symbol' || value instanceof Symbol }
 export function isUndefined(value: any) { return value === (void 0) }
 export function isNull(value: any) { return value === null }
 

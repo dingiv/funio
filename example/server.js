@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { ReadStream } from 'node:fs'
 import { genject, createFunioInjector } from 'funio'
 
 function* demo() {

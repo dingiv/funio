@@ -12,6 +12,8 @@ export interface Pattern<T = unknown, R = unknown> extends Matchable<T, R> {
    equals(): Pattern
    like(): Pattern
    same(): Pattern
+   regex(): Pattern
+   range(): Pattern
 
    guard(pred: UF<T, boolean>): Pattern
    option(other: Pattern): Pattern
